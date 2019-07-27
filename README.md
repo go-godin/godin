@@ -5,6 +5,10 @@
 # What?
 An awesome toolkit to support go developers (me) when writing microservices which leverage go-kit.
 Godin takes care of generating as much code as possible while being opinionated.
+Generally speaking, Godin will provide templates within your project, 
+specifically for your project. It will then always use these templates 
+to generate code, giving the developer a lot of freedom. 
+
 
 # Why?
 After a while of writing microservices the boilerplate code to write go-kit services gets annoying.
@@ -14,6 +18,7 @@ Godin is my attempt of solving that problem leveraging go-kit and trying to obey
 1. Shared models are always specified using Protobuf
 2. The service API is always specified using gRPC services
 3. Every gRPC service represents it's own subdomain (DDD)
+4. Godin will not restrict the developer with it's generated files 
 
 ## What does it do exactly?
 ####  Firstly, what are the components of a go-kit service? 
