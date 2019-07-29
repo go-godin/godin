@@ -1,0 +1,46 @@
+godin:
+  project:
+    name: "example"
+    namespace: "godin"
+  kubernetes:
+    deployment:
+      something: "foo"
+    service:
+      bar: "foobar"
+  transport:
+    grpc:
+      server:
+        port: 50051
+        host: "0.0.0.0"
+    http:
+      server:
+        port: 8080
+        host: "0.0.0.0"
+      debugServer:
+        port: 3000
+        host: "0.0.0.0"
+        metricsPath: "/metrics"
+        pprofPath: "/debug/pprof"
+    amqp:
+      publisher:
+        - topic: "some.topic"
+          deliveryMode: 2
+          exchangeName: "some-exchange"
+          queue: "derp"
+        - topic: "another.topic"
+          deliveryMode: 2
+          exchangeName: "some-other-exchange"
+          queue: "derp-123"
+          protobuf:
+            - eventMessage: "SomeEventMessage"
+      subscriber:
+        - topic: "user.created"
+          exchange: "user-exchange"
+          prefetch: 10
+          autoAck: false
+          queue:
+            - name: "user-created-queue"
+              autoDelete: false
+              durable: true
+              exclusive: false
+              noWait: false
