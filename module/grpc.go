@@ -9,8 +9,8 @@ type GrpcServerModule struct {
 
 // grpcServerConfig defines the transport.grpc.server module configuration struct.
 type grpcServerConfig struct {
-	Port    int    `mapstructure:"port"`
-	Address string `mapstructure:"address"`
+	DefaultPort    int    `yaml:"defaultPort"`
+	DefaultAddress string `yaml:"defaultAddress"`
 }
 
 // NewGrpcServerModule returns a new pre-initialized GrpcServerModule.
@@ -22,8 +22,8 @@ func NewGrpcServerModule() Module {
 			ModuleName: "grpc-server",
 		},
 		grpcServerConfig: grpcServerConfig{
-			Port:    50051,
-			Address: "0.0.0.0",
+			DefaultPort:    50051,
+			DefaultAddress: "0.0.0.0",
 		},
 		ServerTemplate: grpcServerTemplate,
 	}

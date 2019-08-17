@@ -12,22 +12,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-const ConfigFile = "godin"
-const ConfigFileType = "yaml"
 const TemplateFolder = "templates"
 const DefaultOutputFolder = "."
 
 type Godin struct {
-	enabledModules   module.Registry
-	availableModules []module.Type
-	rootPath         string
-	outputPath       string
+	enabledModules module.Registry
+	rootPath       string
+	outputPath     string
 }
 
 // NewGodin returns a new, preconfigured, instance of godin.
-func NewGodin(availableModules []module.Type, rootPath string, outputPath string) *Godin {
+// If outputPath is empty, the DefaultOutputFolder is used.
+func NewGodin(rootPath string, outputPath string) *Godin {
 	viper.AddConfigPath(rootPath)
-	viper.SetConfigName(ConfigFile)
+	viper.SetConfigName(ConfigFileName)
 	viper.SetConfigType(ConfigFileType)
 
 	if outputPath == "" {
@@ -35,10 +33,9 @@ func NewGodin(availableModules []module.Type, rootPath string, outputPath string
 	}
 
 	g := &Godin{
-		availableModules: availableModules,
-		enabledModules:   module.NewRegistry(),
-		rootPath:         rootPath,
-		outputPath:       outputPath,
+		enabledModules: module.NewRegistry(),
+		rootPath:       rootPath,
+		outputPath:     outputPath,
 	}
 
 	return g
@@ -66,8 +63,7 @@ func (g *Godin) InstallModule(moduleType module.Type) error {
 // ConfigExists checks whether a configuration file exists. That's the indicator whether a project
 // has been initialized.
 func (g *Godin) ConfigExists() bool {
-	p := path.Join(g.rootPath, fmt.Sprintf("%s.%s", ConfigFile, ConfigFileType))
-	fmt.Println(p)
+	p := path.Join(g.rootPath, fmt.Sprintf("%s.%s", ConfigFileName, ConfigFileType))
 
 	if _, err := os.Stat(p); err != nil {
 		return false
@@ -106,7 +102,7 @@ func (g *Godin) EnsureConfigFile() error {
 	if g.ConfigExists() {
 		return nil
 	}
-	_, err := os.Create(path.Join(g.rootPath, fmt.Sprintf("%s.%s", ConfigFile, ConfigFileType)))
+	_, err := os.Create(path.Join(g.rootPath, fmt.Sprintf("%s.%s", ConfigFileName, ConfigFileType)))
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize project")
 	}
