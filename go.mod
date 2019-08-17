@@ -12,4 +12,5 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/spf13/viper v1.4.0
+	github.com/tjarratt/babble v0.0.0-20140317234543-2cf06e8d98b0
 )

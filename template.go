@@ -37,14 +37,15 @@ func (tpl *BaseTemplate) Configuration() *TemplateConfiguration {
 
 func (tpl *BaseTemplate) Render(ctx *Context, moduleConfig interface{}, templateRootPath, outputRootPath string) error {
 	if tpl.Config.Skip {
-		fmt.Printf("[-] template disabled: %s\n", tpl.Config.Name)
+		fmt.Printf("[-] template disabled: %s\n", tpl.Config.SourceFile)
+		return nil
 	}
-	fmt.Printf("[+] template enabled: %s\n", tpl.Config.Name)
+	fmt.Printf("[+] template enabled: %s\n", tpl.Config.SourceFile)
 
 	if !tpl.Config.SourceExists(templateRootPath) {
 		return fmt.Errorf("source template not found %s: %s", tpl.Config.SourceFile)
 	}
-	fmt.Printf("    -> template found: %s\n", tpl.Config.SourceFile)
+	fmt.Printf("    -> template found \n")
 
 	render := NewTemplateRenderer(*tpl.Config, templateRootPath)
 	output, err := render.Render(tpl.prepareContext(ctx, moduleConfig))

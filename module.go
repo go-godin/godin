@@ -1,20 +1,32 @@
 package godin
 
 import (
-	"fmt"
+	"crypto/rand"
+	"encoding/hex"
 )
 
-// Module defines the interface of default godin modules
+// Module defines the interface of default godin enabledModules
 type Module interface {
 	Configurable
-	Addable
-	Removable
+	//Addable
+	//Removable
 
-	// Name should return a printable name of the module. Ideally this name is namespaced.
-	Name() string
+	New() Module
 
-	// PrepareContext enables the module to modify the default Context in order to add the information it needs.
-	PrepareContext(ctx *Context) interface{}
+	// ID returns a unique ID for the current module instance. The purpose of the ID is to allow
+	// enabledModules being installed multiple times and still be identified by their ID.
+	// If a module hardcoded that identifier, it cannot be installed multiple times.
+	ID() string
+
+	// Configuration returns the module configuration as interface.
+	// The configuration is returned as interface not only to allow for custom configuration structs.
+	// The configuration is owned by the module and is of no concern by the other layers of godin.
+	Configuration() interface{}
+
+	// Install hook is called when 'godin add' is executed for that module. The hook enables the module to interfere
+	// and prepare the module (e.g. prompt for values).
+	// The installation is considered a success if error == nil.
+	Install() error
 
 	// Generate is executed when 'godin generate' is called
 	Generate(ctx *Context, templateRootPath, outputRootPath string) error
@@ -31,85 +43,25 @@ type Removable interface {
 	Remove()
 }
 
-// ModuleRegistry defines the interface of how modules are registered, stored and retrieved.
-type ModuleRegistry interface {
-	Register(module Module) error
-	Get(key string) (Module, error)
-	GetEnabled() []Module
-	Modules() []Module
-	Keys() []string
-}
-
-// BaseModule defines the default behaviour of godin modules.
+// BaseModule defines the default behaviour of godin enabledModules.
 type BaseModule struct {
+	ModuleName string
+	Identifier string
 }
 
-
-// DefaultRegistry implements the default ModuleRegistry.
-type DefaultRegistry struct {
-	modules []Module
-}
-
-// Register will register a new module. The module's Key() must be unique.
-// The module is then added to the 'modules' field.
-func (reg *DefaultRegistry) Register(module Module) error {
-	if module.Key() == "" {
-		return fmt.Errorf("the module must provide a non-empty key")
+// ID returns a unique ID for the current module instance. The purpose of the ID is to allow
+// enabledModules being installed multiple times and still be identified by their ID.
+// If a module hardcoded that identifier, it cannot be installed multiple times.
+func (mod *BaseModule) ID() string {
+	if mod.Identifier == "" {
+		b := make([]byte, 4) // 8 characters
+		_, _ = rand.Read(b)
+		mod.Identifier = hex.EncodeToString(b)
 	}
-
-	if reg.IsRegistered(module.Key()) {
-		return fmt.Errorf("a module with the key '%s' is already registered", module.Key())
-	}
-
-	reg.modules = append(reg.modules, module)
-
-	return nil
+	return mod.Identifier
 }
 
-// Get returns a module by key if it's registered.
-func (reg *DefaultRegistry) Get(key string) (Module, error) {
-	for _, mod := range reg.modules {
-		if mod.Key() == key {
-			return mod, nil
-		}
-	}
-	return nil, fmt.Errorf("no module '%s' found", key)
-}
-
-// IsRegistered returns 'true' if a module with the given key is registered. Otherwise 'false' is returned.
-func (reg *DefaultRegistry) IsRegistered(key string) bool {
-	for _, k := range reg.Keys() {
-		if k == key {
-			return true
-		}
-	}
-	return false
-}
-
-// Keys returns a slice of keys of all registered modules
-func (reg *DefaultRegistry) Keys() []string {
-	var keys []string
-	for _, mod := range reg.modules {
-		keys = append(keys, mod.Key())
-	}
-
-	return keys
-}
-
-// GetEnabled iterates over all registered modules and calls their IsEnabled().
-// All enabled modules are then returned.
-func (reg *DefaultRegistry) GetEnabled() []Module {
-	var enabled []Module
-	for _, mod := range reg.modules {
-		if mod.IsEnabled() {
-			enabled = append(enabled, mod)
-		}
-	}
-
-	return enabled
-}
-
-// Modules returns all registered modules
-func (reg *DefaultRegistry) Modules() []Module {
-	return reg.modules
+// Name returns a printable name of the module.
+func (mod *BaseModule) Name() string {
+	return mod.ModuleName
 }

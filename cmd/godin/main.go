@@ -12,8 +12,8 @@ import (
 func main() {
 	wd, _ := os.Getwd()
 
-	registry := registerModules()
-	app := godin.NewGodin(registry, wd, "examples")
+	availableModules := registerModules()
+	app := godin.NewGodin(availableModules, wd, "examples")
 
 	if err := app.EnsureConfigFile(); err != nil {
 		fmt.Println(err)
@@ -21,16 +21,24 @@ func main() {
 	}
 
 	// pretend to enable modules, this should be done via the godin cli
-	if err := app.AddModule("transport.grpc.server"); err != nil {
-		panic(err)
+	if err := app.InstallModule("transport.grpc.server"); err != nil {
+		fmt.Printf("ERROR installing module %s: %s\n", "transport.grpc.server", err)
+		os.Exit(1)
 	}
+	fmt.Printf("==> Installed module %s\n", "transport.grpc.server")
 
-	// parse a protobuf, which should also be passed via the cli
-	ctx, err := godin.Parse("/home/lukas/devel/work/protobuf/ticket/ticket/ticket.proto")
-	if err != nil {
-		panic(err)
+	if err := app.InstallModule("transport.grpc.server"); err != nil {
+		fmt.Printf("ERROR installing module %s: %s\n", "transport.grpc.server", err)
+		os.Exit(1)
 	}
+	fmt.Printf("==> Installed module %s\n", "transport.grpc.server")
 
+		// parse a protobuf, which should also be passed via the cli
+		ctx, err := godin.Parse("/home/lukas/devel/work/protobuf/ticket/ticket/ticket.proto")
+		if err != nil {
+			panic(err)
+
+		}
 	//spew.Dump(ctx)
 
 	// ensure we can write the generated files
@@ -39,25 +47,22 @@ func main() {
 	}
 
 	// generate all enabled modules
-	for _, module := range registry.Modules() {
-		if module.IsEnabled() {
-			if err := module.Generate(ctx, app.TemplateRoot(), app.OutputPath()); err != nil {
-				fmt.Printf("[!] ERROR executing '%s': %s\n", module.Name(), err)
-				continue
-			}
-			fmt.Printf("[+] module executed: %s\n", module.Name())
-		} else {
-			fmt.Printf("[-] disabled module: %s\n", module.Name())
+	for _, module := range app.EnabledModules() {
+		fmt.Printf("==> Executing module '%s' with identifier '%s'\n", module.ConfigurationKey(), module.ID())
+		if err := module.Generate(ctx, app.TemplateRoot(), app.OutputPath()); err != nil {
+			fmt.Printf("[!] ERROR executing '%s (%s)': %s\n", module.ConfigurationKey(), module.ID(), err)
+			continue
 		}
 	}
+	fmt.Println("==> DONE")
 
 	if err := viper.WriteConfig(); err != nil {
 		fmt.Print(err)
 	}
 }
 
-func registerModules() godin.ModuleRegistry {
-	registry := &godin.DefaultRegistry{}
+func registerModules() godin.AvailableModuleRegistry {
+	registry := &godin.AvailableRegistry{}
 
 	err := registry.Register(grpcServer.NewGrpcServerModule())
 	if err != nil {

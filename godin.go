@@ -12,10 +12,7 @@ import (
 
 // Configurable defines the interface of anything which can be configured must behave.
 type Configurable interface {
-	Key() string
-	Load() error
-	Save()
-	Delete()
+	ConfigurationKey() string
 }
 
 const ConfigFile = "godin"
@@ -24,13 +21,14 @@ const TemplateFolder = "templates"
 const DefaultOutputFolder = "."
 
 type Godin struct {
-	modules    ModuleRegistry
-	rootPath   string
-	outputPath string
+	enabledModules   EnabledModuleRegistry
+	availableModules AvailableModuleRegistry
+	rootPath         string
+	outputPath       string
 }
 
 // NewGodin returns a new, preconfigured, instance of godin.
-func NewGodin(registry ModuleRegistry, rootPath string, outputPath string) *Godin {
+func NewGodin(availableModules AvailableModuleRegistry, rootPath string, outputPath string) *Godin {
 	viper.AddConfigPath(rootPath)
 	viper.SetConfigName(ConfigFile)
 	viper.SetConfigType(ConfigFileType)
@@ -40,23 +38,31 @@ func NewGodin(registry ModuleRegistry, rootPath string, outputPath string) *Godi
 	}
 
 	g := &Godin{
-		modules:    registry,
-		rootPath:   rootPath,
-		outputPath: outputPath,
+		availableModules: availableModules,
+		enabledModules: NewEnabledRegistry(),
+		rootPath:         rootPath,
+		outputPath:       outputPath,
 	}
 
 	return g
 }
 
-// AddModule adds a new module to the current project.
+// InstallModule adds a new module to the current project.
 // The module will be looked up in the registry. If it exists, the Add() method is called
 // to tell the module to add itself to the configuration.
-func (g *Godin) AddModule(name string) error {
-	module, err := g.modules.Get(name)
+func (g *Godin) InstallModule(name string) error {
+	module, err := g.availableModules.FindModule(name)
 	if err != nil {
-	    return errors.Wrap(err, "failed to add module")
+		return errors.Wrap(err, "failed to install module")
 	}
-	module.Add()
+	module = module.New() // get a fresh instance of the module
+	if err := module.Install(); err != nil {
+		return err
+	}
+
+	if err := g.enabledModules.Register(module); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -91,6 +97,10 @@ func (g *Godin) EnsureOutputPath() error {
 // OutputPath returns the absolute path to the output path where all generated files are placed in.
 func (g *Godin) OutputPath() string {
 	return filepath.Join(g.rootPath, g.outputPath)
+}
+
+func (g *Godin) EnabledModules() ModuleStore {
+	return g.enabledModules.Modules()
 }
 
 // EnsureConfigFile a godin project directory in the configured 'rootPath' and ensure a configuration file exists.
