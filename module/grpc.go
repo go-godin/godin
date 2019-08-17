@@ -1,14 +1,10 @@
-package server
-
-import (
-	"gitub.com/go-godin/godin"
-)
+package module
 
 // GrpcServerModule provides all templates for the gRPC server transport layer
 type GrpcServerModule struct {
-	*godin.BaseModule
+	*BaseModule
 	grpcServerConfig
-	ServerTemplate godin.ModuleTemplate
+	ServerTemplate Template
 }
 
 // grpcServerConfig defines the transport.grpc.server module configuration struct.
@@ -20,22 +16,17 @@ type grpcServerConfig struct {
 // NewGrpcServerModule returns a new pre-initialized GrpcServerModule.
 // The module returns reasonable defaults so that it could be used directly.
 // Upon calling Load(), the configuration will be loaded which eventually overwrites the defaults.
-func NewGrpcServerModule() godin.Module {
+func NewGrpcServerModule() Module {
 	return &GrpcServerModule{
-		BaseModule: &godin.BaseModule{
+		BaseModule: &BaseModule{
 			ModuleName: "grpc-server",
 		},
 		grpcServerConfig: grpcServerConfig{
 			Port:    50051,
 			Address: "0.0.0.0",
 		},
-		ServerTemplate: NewServerTemplate(),
+		ServerTemplate: grpcServerTemplate,
 	}
-}
-
-// TODO: that's a crappy solution, find a better one!
-func (mod *GrpcServerModule) New() godin.Module {
-	return NewGrpcServerModule()
 }
 
 func (mod *GrpcServerModule) Install() error {
@@ -43,8 +34,8 @@ func (mod *GrpcServerModule) Install() error {
 }
 
 // Generate will render the modules templates
-func (mod *GrpcServerModule) Generate(ctx *godin.Context, templateRootPath, outputRootPath string) error {
-	if err := mod.ServerTemplate.Render(ctx, mod.grpcServerConfig, templateRootPath, outputRootPath); err != nil {
+func (mod *GrpcServerModule) Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error {
+	if err := mod.ServerTemplate.Render(protobufContext, mod.grpcServerConfig, templateRootPath, outputRootPath); err != nil {
 		return err
 	}
 	return nil
@@ -61,3 +52,15 @@ func (mod *GrpcServerModule) Configuration() interface{} {
 func (cfg *grpcServerConfig) ConfigurationKey() string {
 	return "transport.grpc.server"
 }
+
+var (
+	grpcServerTemplate = &BaseTemplate{
+		Config: &TemplateConfiguration{
+			Name:       "grpc-server",
+			SourceFile: "transport/grpc/server.go.tmpl",
+			TargetFile: "transport/grpc/server.go",
+			GoSource:   true,
+			Skip:       false,
+		},
+	}
+)

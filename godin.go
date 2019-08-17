@@ -6,14 +6,11 @@ import (
 	"path"
 	"path/filepath"
 
+	"gitub.com/go-godin/godin/module"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
-
-// Configurable defines the interface of anything which can be configured must behave.
-type Configurable interface {
-	ConfigurationKey() string
-}
 
 const ConfigFile = "godin"
 const ConfigFileType = "yaml"
@@ -21,14 +18,14 @@ const TemplateFolder = "templates"
 const DefaultOutputFolder = "."
 
 type Godin struct {
-	enabledModules   EnabledModuleRegistry
-	availableModules AvailableModuleRegistry
+	enabledModules   module.Registry
+	availableModules []module.Type
 	rootPath         string
 	outputPath       string
 }
 
 // NewGodin returns a new, preconfigured, instance of godin.
-func NewGodin(availableModules AvailableModuleRegistry, rootPath string, outputPath string) *Godin {
+func NewGodin(availableModules []module.Type, rootPath string, outputPath string) *Godin {
 	viper.AddConfigPath(rootPath)
 	viper.SetConfigName(ConfigFile)
 	viper.SetConfigType(ConfigFileType)
@@ -39,7 +36,7 @@ func NewGodin(availableModules AvailableModuleRegistry, rootPath string, outputP
 
 	g := &Godin{
 		availableModules: availableModules,
-		enabledModules: NewEnabledRegistry(),
+		enabledModules:   module.NewRegistry(),
 		rootPath:         rootPath,
 		outputPath:       outputPath,
 	}
@@ -50,12 +47,11 @@ func NewGodin(availableModules AvailableModuleRegistry, rootPath string, outputP
 // InstallModule adds a new module to the current project.
 // The module will be looked up in the registry. If it exists, the Add() method is called
 // to tell the module to add itself to the configuration.
-func (g *Godin) InstallModule(name string) error {
-	module, err := g.availableModules.FindModule(name)
-	if err != nil {
-		return errors.Wrap(err, "failed to install module")
+func (g *Godin) InstallModule(moduleType module.Type) error {
+	module := module.Factory(moduleType)
+	if module == nil {
+		return fmt.Errorf("failed to create module of type %v", moduleType)
 	}
-	module = module.New() // get a fresh instance of the module
 	if err := module.Install(); err != nil {
 		return err
 	}
@@ -99,7 +95,7 @@ func (g *Godin) OutputPath() string {
 	return filepath.Join(g.rootPath, g.outputPath)
 }
 
-func (g *Godin) EnabledModules() ModuleStore {
+func (g *Godin) EnabledModules() module.Store {
 	return g.enabledModules.Modules()
 }
 

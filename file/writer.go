@@ -1,4 +1,4 @@
-package godin
+package file
 
 import (
 	"fmt"
@@ -8,21 +8,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-// There must be two writers: FULL and APPEND
-// Each accepting a rendered template
-type Writer struct {
+type baseWriter struct {
 	Path string
 	data []byte
 }
 
-type FileWriter struct {
-	Writer
+type Writer struct {
+	baseWriter
 }
 
-// NewFileWriter initializes a new FileWriter
-func NewFileWriter(path string, data []byte) *FileWriter {
-	return &FileWriter{
-		Writer{
+// NewFileWriter initializes a new Writer
+func NewFileWriter(path string, data []byte) *Writer {
+	return &Writer{
+		baseWriter{
 			Path: path,
 			data: data,
 		},
@@ -31,7 +29,7 @@ func NewFileWriter(path string, data []byte) *FileWriter {
 
 // Write dumps the given data into a file and creates it if necessary.
 // The overwrite flag can be set to overwrite any existing data.
-func (f *FileWriter) Write(overwrite bool) error {
+func (f *Writer) Write(overwrite bool) error {
 	if _, err := os.Stat(f.Path); err == nil {
 		if !overwrite {
 			return fmt.Errorf("%s file already exists, overwrite is disabled", f.Path)
@@ -48,14 +46,14 @@ func (f *FileWriter) Write(overwrite bool) error {
 	return nil
 }
 
-type FileAppendWriter struct {
-	Writer
+type AppendWriter struct {
+	baseWriter
 }
 
 // NewFileAppendWriter returns a new appending file-writer for Godin templates
-func NewFileAppendWriter(path string, data []byte) *FileAppendWriter {
-	return &FileAppendWriter{
-		Writer{
+func NewFileAppendWriter(path string, data []byte) *AppendWriter {
+	return &AppendWriter{
+		baseWriter{
 			data: data,
 			Path: path,
 		},
@@ -64,7 +62,7 @@ func NewFileAppendWriter(path string, data []byte) *FileAppendWriter {
 
 // Write will open the given file and try to append the given data to it
 // The file is NOT created if it doesn't exist.
-func (f *FileAppendWriter) Write() error {
+func (f *AppendWriter) Write() error {
 	file, err := os.OpenFile(f.Path, os.O_APPEND|os.O_WRONLY, 0644)
 	defer file.Close()
 	if err != nil {

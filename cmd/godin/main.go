@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"gitub.com/go-godin/godin/module"
+
 	"github.com/spf13/viper"
 	"gitub.com/go-godin/godin"
-	grpcServer "gitub.com/go-godin/godin/module/transport/grpc/server"
 )
 
 func main() {
@@ -21,24 +22,24 @@ func main() {
 	}
 
 	// pretend to enable modules, this should be done via the godin cli
-	if err := app.InstallModule("transport.grpc.server"); err != nil {
+	if err := app.InstallModule(module.TransportGrpcServer); err != nil {
 		fmt.Printf("ERROR installing module %s: %s\n", "transport.grpc.server", err)
 		os.Exit(1)
 	}
 	fmt.Printf("==> Installed module %s\n", "transport.grpc.server")
 
-	if err := app.InstallModule("transport.grpc.server"); err != nil {
+	if err := app.InstallModule(module.TransportGrpcServer); err != nil {
 		fmt.Printf("ERROR installing module %s: %s\n", "transport.grpc.server", err)
 		os.Exit(1)
 	}
 	fmt.Printf("==> Installed module %s\n", "transport.grpc.server")
 
-		// parse a protobuf, which should also be passed via the cli
-		ctx, err := godin.Parse("/home/lukas/devel/work/protobuf/ticket/ticket/ticket.proto")
-		if err != nil {
-			panic(err)
+	// parse a protobuf, which should also be passed via the cli
+	ctx, err := godin.Parse("/home/lukas/devel/work/protobuf/ticket/ticket/ticket.proto")
+	if err != nil {
+		panic(err)
 
-		}
+	}
 	//spew.Dump(ctx)
 
 	// ensure we can write the generated files
@@ -61,14 +62,10 @@ func main() {
 	}
 }
 
-func registerModules() godin.AvailableModuleRegistry {
-	registry := &godin.AvailableRegistry{}
-
-	err := registry.Register(grpcServer.NewGrpcServerModule())
-	if err != nil {
-		fmt.Print(err)
-		os.Exit(-1)
-	}
-
-	return registry
+func registerModules() (modules []module.Type) {
+	modules = append(
+		modules,
+		module.TransportGrpcServer,
+	)
+	return modules
 }

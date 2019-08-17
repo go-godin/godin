@@ -1,17 +1,19 @@
-package godin
+package module
 
 import (
 	"crypto/rand"
 	"encoding/hex"
 )
 
+type Type int
+
+const (
+	TransportGrpcServer Type = iota
+)
+
 // Module defines the interface of default godin enabledModules
 type Module interface {
 	Configurable
-	//Addable
-	//Removable
-
-	New() Module
 
 	// ID returns a unique ID for the current module instance. The purpose of the ID is to allow
 	// enabledModules being installed multiple times and still be identified by their ID.
@@ -29,21 +31,15 @@ type Module interface {
 	Install() error
 
 	// Generate is executed when 'godin generate' is called
-	Generate(ctx *Context, templateRootPath, outputRootPath string) error
+	Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error
 }
 
-// Addable defines behaviour of anything which can be enabled and checked for
-type Addable interface {
-	Add()
-	IsEnabled() bool
+// Configurable defines the interface of anything which can be configured must behave.
+type Configurable interface {
+	ConfigurationKey() string
 }
 
-// Delete defines behaviour of anything which can be disabled
-type Removable interface {
-	Remove()
-}
-
-// BaseModule defines the default behaviour of godin enabledModules.
+// BaseModule defines the default behaviour of godin modules.
 type BaseModule struct {
 	ModuleName string
 	Identifier string
@@ -65,3 +61,7 @@ func (mod *BaseModule) ID() string {
 func (mod *BaseModule) Name() string {
 	return mod.ModuleName
 }
+
+/*
+
+ */
