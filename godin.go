@@ -2,21 +2,19 @@ package godin
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
 
-	"gitub.com/go-godin/godin/module"
-
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 const TemplateFolder = "templates"
 const DefaultOutputFolder = "."
 
 type Godin struct {
-	enabledModules module.Registry
+	enabledModules Registry
 	rootPath       string
 	outputPath     string
 }
@@ -24,16 +22,12 @@ type Godin struct {
 // NewGodin returns a new, preconfigured, instance of godin.
 // If outputPath is empty, the DefaultOutputFolder is used.
 func NewGodin(rootPath string, outputPath string) *Godin {
-	viper.AddConfigPath(rootPath)
-	viper.SetConfigName(ConfigFileName)
-	viper.SetConfigType(ConfigFileType)
-
 	if outputPath == "" {
 		outputPath = DefaultOutputFolder
 	}
 
 	g := &Godin{
-		enabledModules: module.NewRegistry(),
+		enabledModules: NewRegistry(),
 		rootPath:       rootPath,
 		outputPath:     outputPath,
 	}
@@ -44,8 +38,8 @@ func NewGodin(rootPath string, outputPath string) *Godin {
 // InstallModule adds a new module to the current project.
 // The module will be looked up in the registry. If it exists, the Add() method is called
 // to tell the module to add itself to the configuration.
-func (g *Godin) InstallModule(moduleType module.Type) error {
-	module := module.Factory(moduleType)
+func (g *Godin) InstallModule(moduleType Type) error {
+	module := ModuleFactory(moduleType)
 	if module == nil {
 		return fmt.Errorf("failed to create module of type %v", moduleType)
 	}
@@ -53,10 +47,34 @@ func (g *Godin) InstallModule(moduleType module.Type) error {
 		return err
 	}
 
+	configurator := Configurator{
+		RootPath: g.rootPath,
+	}
+	configurator.Register(module)
+
 	if err := g.enabledModules.Register(module); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (g *Godin) ResolveEnabledModules(resolver ModuleResolver, cfg ResolvableConfig) error {
+	enabledModules, err := resolver.ResolveAll(cfg)
+	if err != nil {
+		return err
+	}
+
+	for _, module := range enabledModules {
+		logrus.Debugf("found enabled module '%s'", module.Identifier())
+		if err := module.Configure(cfg); err != nil {
+			return fmt.Errorf("failed to configure module '%s'", module.Identifier())
+		}
+		if err := g.enabledModules.Register(module); err != nil {
+			return fmt.Errorf("failed to register enabled module '%s'", module.Identifier())
+		}
+		logrus.Debugf("configured module '%s'", module.Identifier())
+	}
 	return nil
 }
 
@@ -91,7 +109,7 @@ func (g *Godin) OutputPath() string {
 	return filepath.Join(g.rootPath, g.outputPath)
 }
 
-func (g *Godin) EnabledModules() module.Store {
+func (g *Godin) EnabledModules() Store {
 	return g.enabledModules.Modules()
 }
 
@@ -108,4 +126,8 @@ func (g *Godin) EnsureConfigFile() error {
 	}
 
 	return nil
+}
+
+func (g *Godin) RootPath() string {
+	return g.rootPath
 }

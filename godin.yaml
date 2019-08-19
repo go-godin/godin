@@ -1,5 +1,5 @@
 transport:
   grpc:
     server:
-    - defaultPort: 50051
-      defaultAddress: 0.0.0.0
+      defaultPort: 50051
+      defaultAddress: PIZZA

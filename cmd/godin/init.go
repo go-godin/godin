@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/spf13/viper"
 	"os"
+
+	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -22,8 +23,14 @@ func Init(c *cli.Context) error {
 	wd, _ := os.Getwd()
 	g := godin.NewGodin(wd, "")
 
-	if g.ConfigExists() {
-		log.Fatal("project already initialized")
+	// prepare configurator
+	cfg := godin.Configurator{RootPath: g.RootPath()}
+
+	if cfg.ConfigExists() {
+		log.Fatal("already initialized")
+	}
+	if err := cfg.Initialize(); err != nil {
+		log.Fatal(err)
 	}
 
 	if err := g.EnsureConfigFile(); err != nil {
@@ -31,7 +38,6 @@ func Init(c *cli.Context) error {
 		os.Exit(1)
 	}
 	log.Debug("created config file")
-
 
 	log.Debugf("namespace: %s", namespace)
 	log.Debugf("service: %s", service)

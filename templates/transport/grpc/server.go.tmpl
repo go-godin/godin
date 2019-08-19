@@ -6,7 +6,7 @@ import "context"
 {{- $server := .MOD }}
 {{- $tpl := .TPL }}
 
-// {{$server.Address}}:{{ $server.Port }}
+// {{$server.DefaultAddress}}:{{ $server.DefaultPort }}
 // ¬{{ $tpl.Skip }}
 
 {{ range $ctx.Services }}

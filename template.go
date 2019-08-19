@@ -1,4 +1,4 @@
-package module
+package godin
 
 import (
 	"bytes"
@@ -10,9 +10,10 @@ import (
 	"path/filepath"
 	"text/template"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/Masterminds/sprig"
 	"github.com/pkg/errors"
-	"gitub.com/go-godin/godin/file"
 )
 
 type Template interface {
@@ -76,37 +77,42 @@ func (tpl *BaseTemplate) Configuration() *TemplateConfiguration {
 }
 
 func (tpl *BaseTemplate) Render(protobufContext interface{}, moduleConfig interface{}, templateRootPath, outputRootPath string) error {
+	logger := log.WithFields(log.Fields{
+		"template": tpl.Config.SourceFile,
+		"target":   tpl.Config.TargetFile,
+	})
+
 	if tpl.Config.Skip {
-		fmt.Printf("[-] template disabled: %s\n", tpl.Config.SourceFile)
+		logger.Debug("template disabled")
 		return nil
 	}
-	fmt.Printf("[+] template enabled: %s\n", tpl.Config.SourceFile)
+	logger.Debug("template enabled")
 
 	if !tpl.Config.SourceExists(templateRootPath) {
-		return fmt.Errorf("source template not found %s: %s", tpl.Config.SourceFile)
+		err := fmt.Errorf("template not found: %s", tpl.Config.SourceFile)
+		return err
 	}
-	fmt.Printf("    -> template found \n")
+	logger.Debug("template found")
 
 	render := NewTemplateRenderer(*tpl.Config, templateRootPath)
 	output, err := render.Render(tpl.prepareContext(protobufContext, moduleConfig))
 	if err != nil {
+		logger.WithError(err).Error("failed to render template")
 		fmt.Println(err)
+	}
+
+	if err := tpl.Config.EnsureTargetPath(outputRootPath); err != nil {
+		return err
 	}
 
 	// write targetFile
 	targetPath := path.Join(outputRootPath, tpl.Config.TargetFile)
-	writer := file.NewFileWriter(targetPath, output)
+	writer := NewFileWriter(targetPath, output)
 	if err := writer.Write(true); err != nil {
 		return fmt.Errorf("failed to write template '%s': %s", tpl.Config.SourceFile, err)
 	}
-	fmt.Printf("    -> target file written: %s\n", tpl.Config.TargetFile)
+	logger.Info("rendered template into target")
 
-	/*
-		if err := tpl.Config.EnsureTargetPath(app.OutputPath()); err != nil {
-			fmt.Println(err)
-		}
-
-	*/
 	return nil
 }
 

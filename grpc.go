@@ -1,9 +1,8 @@
-package module
+package godin
 
 // GrpcServerModule provides all templates for the gRPC server transport layer
 type GrpcServerModule struct {
-	*BaseModule
-	grpcServerConfig
+	*grpcServerConfig
 	ServerTemplate Template
 }
 
@@ -15,13 +14,10 @@ type grpcServerConfig struct {
 
 // NewGrpcServerModule returns a new pre-initialized GrpcServerModule.
 // The module returns reasonable defaults so that it could be used directly.
-// Upon calling Load(), the configuration will be loaded which eventually overwrites the defaults.
+// Upon calling Initialize(), the configuration will be loaded which eventually overwrites the defaults.
 func NewGrpcServerModule() Module {
 	return &GrpcServerModule{
-		BaseModule: &BaseModule{
-			ModuleName: "grpc-server",
-		},
-		grpcServerConfig: grpcServerConfig{
+		grpcServerConfig: &grpcServerConfig{
 			DefaultPort:    50051,
 			DefaultAddress: "0.0.0.0",
 		},
@@ -30,6 +26,16 @@ func NewGrpcServerModule() Module {
 }
 
 func (mod *GrpcServerModule) Install() error {
+	return nil
+}
+
+func (mod *GrpcServerModule) Configure(source ResolvableConfig) error {
+	cfg := &grpcServerConfig{}
+	if err := source.Unmarshal(mod.Identifier(), cfg); err != nil {
+		return err
+	}
+	mod.grpcServerConfig = cfg
+
 	return nil
 }
 
@@ -46,11 +52,17 @@ func (mod *GrpcServerModule) Configuration() interface{} {
 	return mod.grpcServerConfig
 }
 
-// ConfigurationKey returns the GrpcServerModule key. It's used as unique identifier and - though only internally - also
-// used as configuration key. Note that the ConfigurationKey() must not always correspond to the configuration key used by the
+// Identifier returns the GrpcServerModule key. It's used as unique identifier and - though only internally - also
+// used as configuration key. Note that the Identifier() must not always correspond to the configuration key used by the
 // module.
-func (cfg *grpcServerConfig) ConfigurationKey() string {
+func (mod *GrpcServerModule) Identifier() string {
 	return "transport.grpc.server"
+}
+
+func (mod *GrpcServerModule) OutputPaths() (paths []string) {
+	paths = append(paths, grpcServerTemplate.Configuration().TargetFile)
+
+	return paths
 }
 
 var (
