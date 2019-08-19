@@ -21,22 +21,21 @@ func Init(c *cli.Context) error {
 	}
 
 	wd, _ := os.Getwd()
-	g := godin.NewGodin(wd, "")
 
-	// prepare configurator
-	cfg := godin.Configurator{RootPath: g.RootPath()}
+	cfg := godin.NewConfigurator(wd)
+	//g := godin.NewGodin(cfg, wd, "")
 
 	if cfg.ConfigExists() {
 		log.Fatal("already initialized")
+	}
+	if err := cfg.EnsureConfigFile(); err != nil {
+		log.Println(err)
+		os.Exit(1)
 	}
 	if err := cfg.Initialize(); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := g.EnsureConfigFile(); err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
 	log.Debug("created config file")
 
 	log.Debugf("namespace: %s", namespace)

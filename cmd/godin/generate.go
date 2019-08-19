@@ -11,10 +11,9 @@ import (
 
 func Generate(c *cli.Context) error {
 	wd, _ := os.Getwd()
-	app := godin.NewGodin(wd, "examples")
 
 	// prepare configurator
-	cfg := godin.NewConfigurator(app.RootPath())
+	cfg := godin.NewConfigurator(wd)
 	if !cfg.ConfigExists() {
 		log.Fatal("not a godin project")
 	}
@@ -22,12 +21,14 @@ func Generate(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
+	app := godin.NewGodin(cfg, wd, "")
+
 	// resolve all enabled modules and configure them based on the godin.yaml
 	if err := app.ResolveEnabledModules(godin.ModuleResolver{}, cfg); err != nil {
 		log.WithError(err).Fatal("failed to resolve enabled modules")
 	}
 
-	// add modules to the configuration
+	// add existing modules to the configuration
 	for _, module := range app.EnabledModules() {
 		if err := cfg.Register(module); err != nil {
 			log.WithError(err).Error("failed to register config-provider to config store")
@@ -45,15 +46,6 @@ func Generate(c *cli.Context) error {
 	if err := app.EnsureOutputPath(); err != nil {
 		log.Println(err)
 	}
-
-	// TODO: load configuration via new configurator
-	// TODO: use the resolver to resolve all enabled modules and return a preconfigured instance
-
-	/*
-		if err := app.InstallModule(godin.TransportGrpcServer); err != nil {
-			log.Error(err)
-		}
-	*/
 
 	if len(app.EnabledModules()) == 0 {
 		log.Info("no modules enabled")

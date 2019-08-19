@@ -1,0 +1,8 @@
+project:
+  namespace: godin
+  service: ticket
+transport:
+  grpc:
+    server:
+      defaultPort: 50051
+      defaultAddress: 0.0.0.0

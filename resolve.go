@@ -1,5 +1,9 @@
 package godin
 
+import (
+	"fmt"
+)
+
 type Resolvable interface {
 	IsSet(key string) bool
 	Get(key string) interface{}
@@ -13,13 +17,22 @@ var moduleNameTypes = map[string]Type{
 }
 
 func (res *ModuleResolver) ResolveAll(source Resolvable) (modules []Module, err error) {
-	for key, _ := range moduleNameTypes {
+	for key := range moduleNameTypes {
 		if source.IsSet(key) {
 			mod := ModuleFactory(moduleNameTypes[key])
 			modules = append(modules, mod)
 		}
 	}
 	return modules, nil
+}
+
+func (res *ModuleResolver) Resolve(moduleName string) (Module, error) {
+	for key, typ := range moduleNameTypes {
+		if key == moduleName {
+			return ModuleFactory(typ), nil
+		}
+	}
+	return nil, fmt.Errorf("module '%s' cannot be resolved", moduleName)
 }
 
 func ModuleFactory(moduleType Type) Module {

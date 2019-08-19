@@ -2,7 +2,7 @@ package test
 
 import "context"
 
-// 1.2.3.4:50051
+// PIZZA:50051
 // ¬false
 
 type TicketService interface {
