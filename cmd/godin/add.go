@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path"
 
 	log "github.com/sirupsen/logrus"
 	"gitub.com/go-godin/godin"
@@ -48,6 +49,29 @@ func Add(c *cli.Context) error {
 
 	if err := app.InstallModule(newModule); err != nil {
 		log.WithError(err).Fatal("unable to install module")
+	}
+
+	// write module templates into project templates folder
+	writer := godin.NewTemplateWriter(godin.Templates)
+	for _, tpl := range newModule.Templates() {
+		tplSource := tpl.Configuration().SourceFile
+		tplTargetAbs := path.Join(app.TemplateRoot(), tplSource)
+		logger := log.WithFields(log.Fields{
+			"sourceFile": "binary://" + tplSource,
+			"targetFile": tplSource,
+		})
+
+		if err := writer.EnsurePath(tplTargetAbs); err != nil {
+			logger.WithError(err).Error("unable to ensure template path")
+			continue
+		}
+		logger.Debug("template target exists")
+
+		if err := writer.Write(tplSource, tplTargetAbs); err != nil {
+			logger.WithError(err).Error("unable to write template, module may not work correctly")
+			continue
+		}
+		logger.Info("template written")
 	}
 
 	if err := cfg.Save(); err != nil {

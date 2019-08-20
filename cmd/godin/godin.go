@@ -29,30 +29,30 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name: "init",
+			Name:    "init",
 			Aliases: []string{"i"},
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:        "namespace, n",
-					Usage:       "The namespace of the project (e.g. 'user' for the user stack)",
-					Required:    true,
+					Name:     "namespace, n",
+					Usage:    "The namespace of the project (e.g. 'user' for the user stack)",
+					Required: true,
 				},
 				cli.StringFlag{
-					Name:        "service, s",
-					Usage:       "The service name which this project owns, normalized (lowercase)",
-					Required:    true,
+					Name:     "service, s",
+					Usage:    "The service name which this project owns, normalized (lowercase)",
+					Required: true,
 				},
 			},
-			Usage: "Initialize a godin project in the current directory",
+			Usage:  "Initialize a godin project in the current directory",
 			Action: Init,
 			Before: setLogLevel,
 		},
 		{
-			Name:                   "add",
-			Aliases:                []string{"a"},
-			Usage:                  "Add a module to the current project",
-			Before:                 setLogLevel,
-			Action:                 Add,
+			Name:    "add",
+			Aliases: []string{"a"},
+			Usage:   "Add a module to the current project",
+			Before:  setLogLevel,
+			Action:  Add,
 		},
 		{
 			Name:    "generate",
@@ -66,9 +66,9 @@ func main() {
 					Destination: &protobufPath,
 				},
 			},
-			Usage: "generate all enabled module templates",
+			Usage:  "generate all enabled module templates",
 			Action: Generate,
-			Before:setLogLevel,
+			Before: setLogLevel,
 		},
 	}
 

@@ -44,7 +44,7 @@ func Generate(c *cli.Context) error {
 
 	// ensure the base output path exists
 	if err := app.EnsureOutputPath(); err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	if len(app.EnabledModules()) == 0 {
@@ -53,13 +53,13 @@ func Generate(c *cli.Context) error {
 
 	// generate all enabled modules
 	for _, module := range app.EnabledModules() {
-		log.Printf("==> Executing module '%s'\n", module.Identifier())
-
-		// Generate() all modules
+		logger := log.WithField("module", module.Identifier())
+		logger.Info("executing module")
 		if err := module.Generate(ctx, app.TemplateRoot(), app.OutputPath()); err != nil {
-			log.Printf("[!] ERROR executing '%s': %s\n", module.Identifier(), err)
+			logger.WithError(err).Error("module generation failed")
 			continue
 		}
+		logger.Info("module executed successfully")
 	}
 
 	if err := cfg.Save(); err != nil {

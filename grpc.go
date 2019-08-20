@@ -29,6 +29,12 @@ func (mod *GrpcServerModule) Install() error {
 	return nil
 }
 
+func (mod *GrpcServerModule) Templates() (tpl []Template) {
+	tpl = append(tpl, grpcServerTemplate)
+
+	return tpl
+}
+
 func (mod *GrpcServerModule) Configure(source ResolvableConfig) error {
 	cfg := &grpcServerConfig{}
 	if err := source.Unmarshal(mod.Identifier(), cfg); err != nil {

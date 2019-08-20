@@ -12,11 +12,12 @@ type ResolvableConfig interface {
 }
 
 // Module defines the interface of default godin enabledModules
-// TODO: a module should provide it's cli flags
 type Module interface {
 	ConfigProvider
 
 	Configure(source ResolvableConfig) error
+
+	Templates() []Template
 
 	// OutputPaths returns a list of paths which must exist in order for the module to correctly generate the
 	// templates.
@@ -29,9 +30,4 @@ type Module interface {
 
 	// Generate is executed when 'godin generate' is called
 	Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error
-}
-
-// Configurable defines the interface of anything which can be configured must behave.
-type Configurable interface {
-	ConfigurationKey() string
 }

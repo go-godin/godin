@@ -11,6 +11,7 @@ import (
 )
 
 func Init(c *cli.Context) error {
+
 	namespace := c.String("namespace")
 	service := c.String("service")
 	if namespace == "" {

@@ -3,7 +3,9 @@ package godin
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -48,6 +50,45 @@ func (f *Writer) Write(overwrite bool) error {
 
 type AppendWriter struct {
 	baseWriter
+}
+
+type TemplateWriter struct {
+	fs http.FileSystem
+}
+
+func NewTemplateWriter(fs http.FileSystem) *TemplateWriter {
+	return &TemplateWriter{fs: fs}
+}
+
+func (tw *TemplateWriter) Write(sourcePath, targetPath string) error {
+	if _, err := os.Stat(targetPath); err == nil {
+		return fmt.Errorf("target template already exists, local version will not be overwritten")
+	}
+
+	f, err := tw.fs.Open(sourcePath)
+	if err != nil {
+		return errors.Wrap(err, "unable to open template source")
+	}
+	defer f.Close()
+
+	buf, err := ioutil.ReadAll(f)
+	if err != nil {
+		return errors.Wrap(err, "unable to read from template file")
+	}
+
+	if err := ioutil.WriteFile(targetPath, buf, 0644); err != nil {
+		return errors.Wrap(err, "unable to write template into target")
+	}
+	return nil
+}
+
+func (tw *TemplateWriter) EnsurePath(path string) error {
+	if _, err := os.Stat(filepath.Join(path)); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // NewFileAppendWriter returns a new appending file-writer for Godin templates
