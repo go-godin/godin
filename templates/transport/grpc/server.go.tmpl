@@ -2,18 +2,18 @@ package test
 
 import "context"
 
-{{- $ctx := .CTX }}
-{{- $server := .MOD }}
-{{- $tpl := .TPL }}
+{{- $protobuf := .Protobuf }}
+{{- $server := .Module }}
+{{- $tpl := .Template }}
 
 // {{$server.DefaultAddress}}:{{ $server.DefaultPort }}
 // ¬{{ $tpl.Skip }}
 
-{{ range $ctx.Services }}
+{{ range $protobuf.Services }}
 type {{ .Name}} interface {
     {{- range .RPCs }}
-        {{- $req := ($ctx.GetMessage .RequestType) }}
-        {{- $res := ($ctx.GetMessage .ResponseType) }}
+        {{- $req := ($protobuf.GetMessage .RequestType) }}
+        {{- $res := ($protobuf.GetMessage .ResponseType) }}
 
         {{- range .Comments}}
         // {{ . }}
@@ -27,7 +27,7 @@ type {{ .Name}} interface {
 }
 {{- end }}
 
-{{- range $ctx.Messages }}
+{{- range $protobuf.Messages }}
 {{/*
     SHARED MODELS
 */}}
@@ -48,7 +48,7 @@ type {{ .Name }} struct {
 {{/*
     SHARED MODELS (ENUMS)
 */}}
-{{- range $ctx.Enums }}
+{{- range $protobuf.Enums }}
 {{- $name := title .Name}}
 // {{ title $name }} enumeration
 type {{ $name }} int32
@@ -77,7 +77,7 @@ var {{ $name }}_value = map[string]int32{
 {{/*
     REQUESTS
 */}}
-{{- range $ctx.Messages }}
+{{- range $protobuf.Messages }}
 {{- if eq .IsRequest true }}
 type {{ .Name }} struct {
     {{ range .Fields }}
@@ -94,7 +94,7 @@ type {{ .Name }} struct {
 {{/*
     RESPONSES
 */}}
-{{- range $ctx.Messages }}
+{{- range $protobuf.Messages }}
 {{- if eq .IsResponse true }}
 type {{ .Name }} struct {
     {{ range .Fields }}

@@ -27,15 +27,23 @@ func Add(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	app := godin.NewGodin(cfg, wd, "")
+	app, err := godin.NewGodinFromConfig(cfg, wd)
+	if err != nil {
+		log.WithError(err).Fatal("unable to load project")
+	}
 
 	// resolve all enabled modules and configure them based on the godin.yaml
-	resolver := godin.ModuleResolver{}
+	resolver := godin.NewModuleResolver(app.ProjectConfiguration)
 	if err := app.ResolveEnabledModules(resolver, cfg); err != nil {
 		log.WithError(err).Fatal("failed to resolve enabled modules")
 	}
 
-	// add existing modules to the configuration
+	// add godin to the configurator
+	if err := cfg.Register(app); err != nil {
+		log.WithError(err).Fatal("unable to register godin configuration")
+	}
+
+	// add existing modules to the configurator
 	for _, module := range app.EnabledModules() {
 		if err := cfg.Register(module); err != nil {
 			log.WithError(err).Error("unable to register config-provider to config store")
@@ -78,24 +86,5 @@ func Add(c *cli.Context) error {
 		log.WithError(err).Error("unable to save config-file")
 	}
 
-	/*
-
-		// TODO: ensure the module isn't already installed
-
-		switch moduleName {
-		case "transport.grpc.server":
-			log.Info("installing grpc server module")
-			m := godin.ModuleFactory(godin.TransportGrpcServer)
-			viper.Set(m.Identifier(), []interface{}{m.Configuration()})
-			break
-		default:
-			log.Errorf("module '%s' is unknown, sorry", moduleName)
-		}
-
-		if err := viper.WriteConfig(); err != nil {
-			log.Errorf("failed to write configuration: %s", err)
-		}
-
-	*/
 	return nil
 }

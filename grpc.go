@@ -1,5 +1,26 @@
 package godin
 
+var (
+	grpcServerTemplate = &BaseTemplate{
+		Config: &TemplateConfiguration{
+			Name:       "grpc-server",
+			SourceFile: "transport/grpc/server.go.tmpl",
+			TargetFile: "transport/grpc/server.go",
+			GoSource:   true,
+			Skip:       false,
+		},
+	}
+	grpcClientTemplate = &BaseTemplate{
+		Config: &TemplateConfiguration{
+			Name:       "grpc-client",
+			SourceFile: "transport/grpc/client.go.tmpl",
+			TargetFile: "transport/grpc/client.go",
+			GoSource:   true,
+			Skip:       false,
+		},
+	}
+)
+
 // GrpcServerModule provides all templates for the gRPC server transport layer
 type GrpcServerModule struct {
 	*grpcServerConfig
@@ -71,14 +92,73 @@ func (mod *GrpcServerModule) OutputPaths() (paths []string) {
 	return paths
 }
 
-var (
-	grpcServerTemplate = &BaseTemplate{
-		Config: &TemplateConfiguration{
-			Name:       "grpc-server",
-			SourceFile: "transport/grpc/server.go.tmpl",
-			TargetFile: "transport/grpc/server.go",
-			GoSource:   true,
-			Skip:       false,
+// GrpcServerModule provides all templates for the gRPC server transport layer
+type GrpcClientModule struct {
+	*grpcClientConfig
+	ClientTemplate Template
+	project        ProjectConfiguration
+}
+
+// grpcServerConfig defines the transport.grpc.server module configuration struct.
+type grpcClientConfig struct {
+	RetryCount int `yaml:"retryCount"`
+}
+
+// NewGrpcServerModule returns a new pre-initialized GrpcServerModule.
+// The module returns reasonable defaults so that it could be used directly.
+// Upon calling Initialize(), the configuration will be loaded which eventually overwrites the defaults.
+func NewGrpcClientModule(configuration ProjectConfiguration) Module {
+	return &GrpcClientModule{
+		grpcClientConfig: &grpcClientConfig{
+			RetryCount: 3,
 		},
+		ClientTemplate: grpcClientTemplate,
+		project:        configuration,
 	}
-)
+}
+
+func (mod *GrpcClientModule) Install() error {
+	return nil
+}
+
+func (mod *GrpcClientModule) Templates() (tpl []Template) {
+	tpl = append(tpl, grpcClientTemplate)
+
+	return tpl
+}
+
+func (mod *GrpcClientModule) Configure(source ResolvableConfig) error {
+	cfg := &grpcClientConfig{}
+	if err := source.Unmarshal(mod.Identifier(), cfg); err != nil {
+		return err
+	}
+	mod.grpcClientConfig = cfg
+
+	return nil
+}
+
+// Generate will render the modules templates
+func (mod *GrpcClientModule) Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error {
+	if err := mod.ClientTemplate.Render(protobufContext, mod.grpcClientConfig, templateRootPath, outputRootPath); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Configuration returns the module configuration as interface.
+func (mod *GrpcClientModule) Configuration() interface{} {
+	return mod.grpcClientConfig
+}
+
+// Identifier returns the GrpcServerModule key. It's used as unique identifier and - though only internally - also
+// used as configuration key. Note that the Identifier() must not always correspond to the configuration key used by the
+// module.
+func (mod *GrpcClientModule) Identifier() string {
+	return "transport.grpc.client"
+}
+
+func (mod *GrpcClientModule) OutputPaths() (paths []string) {
+	paths = append(paths, grpcServerTemplate.Configuration().TargetFile)
+
+	return paths
+}

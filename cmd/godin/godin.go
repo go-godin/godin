@@ -48,6 +48,20 @@ func main() {
 			Before: setLogLevel,
 		},
 		{
+			Name:    "update-templates",
+			Aliases: []string{"u"},
+			Usage:   "Update the project's templates with the upstream templates, adding missing files and folders.",
+			Before:  setLogLevel,
+			Action:  SyncTemplates,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:     "force, f",
+					Usage:    "Forcefully write the templates, overwriting any local modifications",
+					Required: false,
+				},
+			},
+		},
+		{
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "Add a module to the current project",

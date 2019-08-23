@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,27 +14,84 @@ const TemplateFolder = "templates"
 const DefaultOutputFolder = "."
 
 type Godin struct {
-	enabledModules Registry
-	rootPath       string
-	outputPath     string
-	configurator   *Configurator
+	enabledModules       Registry
+	rootPath             string
+	outputPath           string
+	configRegistry       ConfigRegistry
+	ProjectConfiguration *ProjectConfiguration
+}
+
+type ProjectConfiguration struct {
+	Service struct {
+		Namespace string
+		Name      string
+	}
+	Templates struct {
+		SourceFolder string `yaml:"sourceFolder"`
+		OutputFolder string `yaml:"outputFolder"`
+	}
+}
+
+type ConfigRegistry interface {
+	Register(provider ConfigProvider) error
+	Get(key string) interface{}
+	Unmarshal(key string, target interface{}) error
+}
+
+type ModuleResolver interface {
+	ResolveAll(source Resolvable) (modules []Module, err error)
 }
 
 // NewGodin returns a new, preconfigured, instance of godin.
 // If outputPath is empty, the DefaultOutputFolder is used.
-func NewGodin(configurator *Configurator, rootPath string, outputPath string) *Godin {
+func NewGodin(configRegistry ConfigRegistry, rootPath string, outputPath string) *Godin {
 	if outputPath == "" {
 		outputPath = DefaultOutputFolder
 	}
 
+	cfg := &ProjectConfiguration{
+		Templates: struct {
+			SourceFolder string `yaml:"sourceFolder"`
+			OutputFolder string `yaml:"outputFolder"`
+		}{
+			SourceFolder: TemplateFolder,
+			OutputFolder: outputPath,
+		},
+	}
+
 	g := &Godin{
-		enabledModules: NewRegistry(),
-		rootPath:       rootPath,
-		outputPath:     outputPath,
-		configurator:   configurator,
+		enabledModules:       NewRegistry(),
+		rootPath:             rootPath,
+		outputPath:           outputPath,
+		configRegistry:       configRegistry,
+		ProjectConfiguration: cfg,
 	}
 
 	return g
+}
+
+func NewGodinFromConfig(configRegistry ConfigRegistry, rootPath string) (*Godin, error) {
+	g := &Godin{
+		enabledModules: NewRegistry(),
+		configRegistry: configRegistry,
+		rootPath:       rootPath,
+	}
+
+	cfg := &ProjectConfiguration{}
+	if err := configRegistry.Unmarshal(g.Identifier(), cfg); err != nil {
+		return nil, err
+	}
+	g.ProjectConfiguration = cfg
+
+	return g, nil
+}
+
+func (g *Godin) Identifier() string {
+	return "project"
+}
+
+func (g *Godin) Configuration() interface{} {
+	return g.ProjectConfiguration
 }
 
 // InstallModule adds a new module to the current project.
@@ -46,8 +105,8 @@ func (g *Godin) InstallModule(module Module) error {
 		return err
 	}
 
-	if err := g.configurator.Register(module); err != nil {
-		return fmt.Errorf("unable to register module with the configurator: %s", err)
+	if err := g.configRegistry.Register(module); err != nil {
+		return fmt.Errorf("unable to register module with the configRegistry: %s", err)
 	}
 
 	if err := g.enabledModules.Register(module); err != nil {
@@ -85,7 +144,7 @@ func (g *Godin) TemplateRoot() string {
 func (g *Godin) EnsureOutputPath() error {
 	if _, err := os.Stat(filepath.Join(g.rootPath, g.outputPath)); os.IsNotExist(err) {
 		if err := os.MkdirAll(g.outputPath, 0755); err != nil {
-			return err
+			return errors.Wrap(err, "EnsureOutputPath")
 		}
 	}
 	return nil
@@ -93,7 +152,7 @@ func (g *Godin) EnsureOutputPath() error {
 
 // OutputPath returns the absolute path to the output path where all generated files are placed in.
 func (g *Godin) OutputPath() string {
-	return filepath.Join(g.rootPath, g.outputPath)
+	return filepath.Join(g.rootPath, g.ProjectConfiguration.Templates.OutputFolder)
 }
 
 func (g *Godin) EnabledModules() Store {

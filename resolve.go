@@ -9,36 +9,44 @@ type Resolvable interface {
 	Get(key string) interface{}
 }
 
-type ModuleResolver struct {
+type moduleResolver struct {
+	project ProjectConfiguration
+}
+
+func NewModuleResolver(configuration *ProjectConfiguration) *moduleResolver {
+	return &moduleResolver{project: *configuration}
 }
 
 var moduleNameTypes = map[string]Type{
 	"transport.grpc.server": TransportGrpcServer,
+	"transport.grpc.client": TransportGrpcClient,
 }
 
-func (res *ModuleResolver) ResolveAll(source Resolvable) (modules []Module, err error) {
+func (res *moduleResolver) ResolveAll(source Resolvable) (modules []Module, err error) {
 	for key := range moduleNameTypes {
 		if source.IsSet(key) {
-			mod := ModuleFactory(moduleNameTypes[key])
+			mod := res.Factory(moduleNameTypes[key])
 			modules = append(modules, mod)
 		}
 	}
 	return modules, nil
 }
 
-func (res *ModuleResolver) Resolve(moduleName string) (Module, error) {
+func (res *moduleResolver) Resolve(moduleName string) (Module, error) {
 	for key, typ := range moduleNameTypes {
 		if key == moduleName {
-			return ModuleFactory(typ), nil
+			return res.Factory(typ), nil
 		}
 	}
 	return nil, fmt.Errorf("module '%s' cannot be resolved", moduleName)
 }
 
-func ModuleFactory(moduleType Type) Module {
+func (res *moduleResolver) Factory(moduleType Type) Module {
 	switch moduleType {
 	case TransportGrpcServer:
 		return NewGrpcServerModule()
+	case TransportGrpcClient:
+		return NewGrpcClientModule(res.project)
 	default:
 		return nil
 	}

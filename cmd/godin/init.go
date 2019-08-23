@@ -2,8 +2,7 @@ package main
 
 import (
 	"os"
-
-	"github.com/spf13/viper"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -24,7 +23,7 @@ func Init(c *cli.Context) error {
 	wd, _ := os.Getwd()
 
 	cfg := godin.NewConfigurator(wd)
-	//g := godin.NewGodin(cfg, wd, "")
+	g := godin.NewGodin(cfg, wd, "")
 
 	if cfg.ConfigExists() {
 		log.Fatal("already initialized")
@@ -37,15 +36,21 @@ func Init(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
+	// register project config
+	if err := cfg.Register(g); err != nil {
+		log.Fatal("failed to register project configuration")
+	}
+
+	output, _ := filepath.Rel(wd, g.OutputPath())
+	source, _ := filepath.Rel(wd, g.TemplateRoot())
+	g.ProjectConfiguration.Service.Name = service
+	g.ProjectConfiguration.Service.Namespace = namespace
+	g.ProjectConfiguration.Templates.OutputFolder = output
+	g.ProjectConfiguration.Templates.SourceFolder = source
+
 	log.Debug("created config file")
 
-	log.Debugf("namespace: %s", namespace)
-	log.Debugf("service: %s", service)
-
-	viper.Set("project.namespace", namespace)
-	viper.Set("project.service", service)
-
-	if err := viper.WriteConfig(); err != nil {
+	if err := cfg.Save(); err != nil {
 		log.Errorf("failed to write configuration: %s", err)
 	}
 	log.Info("project initialized")

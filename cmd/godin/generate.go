@@ -21,11 +21,19 @@ func Generate(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	app := godin.NewGodin(cfg, wd, "")
+	app, err := godin.NewGodinFromConfig(cfg, wd)
+	if err != nil {
+		log.WithError(err).Fatal("unable to load project")
+	}
 
 	// resolve all enabled modules and configure them based on the godin.yaml
-	if err := app.ResolveEnabledModules(godin.ModuleResolver{}, cfg); err != nil {
+	if err := app.ResolveEnabledModules(godin.NewModuleResolver(app.ProjectConfiguration), cfg); err != nil {
 		log.WithError(err).Fatal("failed to resolve enabled modules")
+	}
+
+	// add godin to the configurator
+	if err := cfg.Register(app); err != nil {
+		log.WithError(err).Fatal("unable to register godin configuration")
 	}
 
 	// add existing modules to the configuration

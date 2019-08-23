@@ -117,15 +117,16 @@ func (tpl *BaseTemplate) Render(protobufContext interface{}, moduleConfig interf
 }
 
 // prepareContext aggregates the protobuf context (global context) with the module and template configuration.
+// TODO: add project config to global template context
 func (tpl *BaseTemplate) prepareContext(protobufContext interface{}, moduleConfig interface{}) interface{} {
 	return struct {
-		CTX interface{}
-		TPL *TemplateConfiguration
-		MOD interface{}
+		Protobuf interface{}
+		Template *TemplateConfiguration
+		Module   interface{}
 	}{
-		CTX: protobufContext,
-		TPL: tpl.Config,
-		MOD: moduleConfig,
+		Protobuf: protobufContext,
+		Template: tpl.Config,
+		Module:   moduleConfig,
 	}
 }
 

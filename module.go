@@ -4,6 +4,7 @@ type Type int
 
 const (
 	TransportGrpcServer Type = iota
+	TransportGrpcClient
 )
 
 type ResolvableConfig interface {
@@ -15,8 +16,11 @@ type ResolvableConfig interface {
 type Module interface {
 	ConfigProvider
 
+	// Configure is used to initialize a module based on some ResolveableConfig which can be
+	// unmarshalled into the module's own configuration struct.
 	Configure(source ResolvableConfig) error
 
+	// Templates returns all template object which the module uses.
 	Templates() []Template
 
 	// OutputPaths returns a list of paths which must exist in order for the module to correctly generate the

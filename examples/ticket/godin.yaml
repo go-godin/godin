@@ -1,8 +1,14 @@
 project:
-  namespace: godin
-  service: ticket
+  service:
+    namespace: godin
+    name: ticket
+  templates:
+    sourceFolder: templates
+    outputFolder: .
 transport:
   grpc:
+    client:
+      retryCount: 3
     server:
       defaultPort: 50051
       defaultAddress: 0.0.0.0
