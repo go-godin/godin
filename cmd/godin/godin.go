@@ -10,6 +10,7 @@ import (
 
 var protobufPath string
 var debug bool
+var force bool
 
 func main() {
 
@@ -55,9 +56,10 @@ func main() {
 			Action:  SyncTemplates,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:     "force, f",
-					Usage:    "Forcefully write the templates, overwriting any local modifications",
-					Required: false,
+					Name:        "force, f",
+					Usage:       "Forcefully write the templates, overwriting any local modifications",
+					Required:    false,
+					Destination: &force,
 				},
 			},
 		},
@@ -67,6 +69,14 @@ func main() {
 			Usage:   "Add a module to the current project",
 			Before:  setLogLevel,
 			Action:  Add,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:        "force, f",
+					Usage:       "Force the installation of the module (also overwriting existing templates)",
+					Required:    false,
+					Destination: &force,
+				},
+			},
 		},
 		{
 			Name:    "generate",

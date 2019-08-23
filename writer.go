@@ -60,11 +60,33 @@ func NewTemplateWriter(fs http.FileSystem) *TemplateWriter {
 	return &TemplateWriter{fs: fs}
 }
 
+func (tw *TemplateWriter) OverWrite(sourcePath, targetPath string) error {
+	if err := tw.write(sourcePath, targetPath); err != nil {
+		return errors.Wrap(err, "Overwrite")
+	}
+	return nil
+}
+
 func (tw *TemplateWriter) Write(sourcePath, targetPath string) error {
 	if _, err := os.Stat(targetPath); err == nil {
 		return fmt.Errorf("target template already exists, local version will not be overwritten")
 	}
+	if err := tw.write(sourcePath, targetPath); err != nil {
+		return errors.Wrap(err, "Write")
+	}
+	return nil
+}
 
+func (tw *TemplateWriter) EnsurePath(path string) error {
+	if _, err := os.Stat(filepath.Join(path)); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (tw *TemplateWriter) write(sourcePath, targetPath string) error {
 	f, err := tw.fs.Open(sourcePath)
 	if err != nil {
 		return errors.Wrap(err, "unable to open template source")
@@ -78,15 +100,6 @@ func (tw *TemplateWriter) Write(sourcePath, targetPath string) error {
 
 	if err := ioutil.WriteFile(targetPath, buf, 0644); err != nil {
 		return errors.Wrap(err, "unable to write template into target")
-	}
-	return nil
-}
-
-func (tw *TemplateWriter) EnsurePath(path string) error {
-	if _, err := os.Stat(filepath.Join(path)); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return err
-		}
 	}
 	return nil
 }

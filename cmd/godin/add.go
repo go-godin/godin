@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"path"
 
 	log "github.com/sirupsen/logrus"
 	"gitub.com/go-godin/godin"
@@ -14,6 +13,9 @@ func Add(c *cli.Context) error {
 	moduleName := c.Args().Get(0)
 	if moduleName == "" {
 		log.Fatal("the module name must be passed")
+	}
+	if force {
+		log.Debug("force mode enabled")
 	}
 
 	wd, _ := os.Getwd()
@@ -63,28 +65,24 @@ func Add(c *cli.Context) error {
 	writer := godin.NewTemplateWriter(godin.Templates)
 	for _, tpl := range newModule.Templates() {
 		tplSource := tpl.Configuration().SourceFile
-		tplTargetAbs := path.Join(app.TemplateRoot(), tplSource)
 		logger := log.WithFields(log.Fields{
-			"sourceFile": "binary://" + tplSource,
-			"targetFile": tplSource,
+			"template": tplSource,
+			"module":   newModule.Identifier(),
 		})
 
-		if err := writer.EnsurePath(tplTargetAbs); err != nil {
-			logger.WithError(err).Error("unable to ensure template path")
-			continue
+		if force {
+			logger.Warning("overwriting existing template")
+			copyTemplate(logger, app.TemplateRoot(), tplSource, writer, true)
+		} else {
+			copyTemplate(logger, app.TemplateRoot(), tplSource, writer, false)
 		}
-		logger.Debug("template target exists")
-
-		if err := writer.Write(tplSource, tplTargetAbs); err != nil {
-			logger.WithError(err).Error("unable to write template, module may not work correctly")
-			continue
-		}
-		logger.Info("template written")
 	}
 
 	if err := cfg.Save(); err != nil {
 		log.WithError(err).Error("unable to save config-file")
 	}
+
+	log.WithField("module", newModule.Identifier()).Info("module installed")
 
 	return nil
 }
