@@ -43,6 +43,16 @@ func main() {
 					Usage:    "The service name which this project owns, normalized (lowercase)",
 					Required: true,
 				},
+				cli.StringFlag{
+					Name:     "module, m",
+					Usage:    "The go-module which will be initialized",
+					Required: true,
+				},
+				cli.StringFlag{
+					Name:     "protobuf-module, p",
+					Usage:    "The module which contains the protobuf stubs for this service",
+					Required: true,
+				},
 			},
 			Usage:  "Initialize a godin project in the current directory",
 			Action: Init,

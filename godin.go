@@ -22,6 +22,10 @@ type Godin struct {
 }
 
 type ProjectConfiguration struct {
+	Module   string
+	Protobuf struct {
+		Module string
+	}
 	Service struct {
 		Namespace string
 		Name      string

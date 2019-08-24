@@ -18,7 +18,7 @@ import (
 
 type Template interface {
 	Configuration() *TemplateConfiguration
-	Render(protobufContext interface{}, moduleConfig interface{}, templateRootPath, outputRootPath string) error
+	Render(projectContext, protobufContext interface{}, moduleConfig interface{}, templateRootPath, outputRootPath string) error
 }
 
 // TemplateConfiguration specifies the base configuration for each template.
@@ -76,7 +76,7 @@ func (tpl *BaseTemplate) Configuration() *TemplateConfiguration {
 	return tpl.Config
 }
 
-func (tpl *BaseTemplate) Render(protobufContext interface{}, moduleConfig interface{}, templateRootPath, outputRootPath string) error {
+func (tpl *BaseTemplate) Render(projectContext, protobufContext interface{}, moduleConfig interface{}, templateRootPath, outputRootPath string) error {
 	logger := log.WithFields(log.Fields{
 		"template": tpl.Config.SourceFile,
 		"target":   tpl.Config.TargetFile,
@@ -95,7 +95,7 @@ func (tpl *BaseTemplate) Render(protobufContext interface{}, moduleConfig interf
 	logger.Debug("template found")
 
 	render := NewTemplateRenderer(*tpl.Config, templateRootPath)
-	output, err := render.Render(tpl.prepareContext(protobufContext, moduleConfig))
+	output, err := render.Render(tpl.prepareContext(projectContext, protobufContext, moduleConfig))
 	if err != nil {
 		logger.WithError(err).Error("failed to render template")
 		fmt.Println(err)
@@ -118,12 +118,14 @@ func (tpl *BaseTemplate) Render(protobufContext interface{}, moduleConfig interf
 
 // prepareContext aggregates the protobuf context (global context) with the module and template configuration.
 // TODO: add project config to global template context
-func (tpl *BaseTemplate) prepareContext(protobufContext interface{}, moduleConfig interface{}) interface{} {
+func (tpl *BaseTemplate) prepareContext(projectContext, protobufContext interface{}, moduleConfig interface{}) interface{} {
 	return struct {
+		Project  interface{}
 		Protobuf interface{}
 		Template *TemplateConfiguration
 		Module   interface{}
 	}{
+		Project:  projectContext,
 		Protobuf: protobufContext,
 		Template: tpl.Config,
 		Module:   moduleConfig,

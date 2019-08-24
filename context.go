@@ -2,15 +2,16 @@ package godin
 
 import (
 	"fmt"
+	"github.com/iancoleman/strcase"
 	"strings"
 )
 
 // Context is a container for everything which can be accessed from godin templates.
 type Context struct {
-	Package string
+	Package  string
 	Services []Service
 	Messages []Message
-	Enums []Enum
+	Enums    []Enum
 }
 
 // GetMessage tries to resolve a given message name and return the actual message struct.
@@ -23,30 +24,29 @@ func (ctx Context) GetMessage(name string) Message {
 			return msg
 		}
 	}
-	return Message{Name:"UNDEFINED", Comments: []string{"Godin was unable to resolve this type"}}
+	return Message{Name: "UNDEFINED", Comments: []string{"Godin was unable to resolve this type"}}
 }
-
 
 // Service describes a gRPC service as defined in a protobuf file
 type Service struct {
-	Name string
+	Name     string
 	Comments []string
-	RPCs []RPC
+	RPCs     []RPC
 }
 
 // RPC abstracts a RPC defined in a protobuf file
 type RPC struct {
-	Name string
-	Comments []string
-	RequestType string
+	Name         string
+	Comments     []string
+	RequestType  string
 	ResponseType string
 }
 
 // Message abstracts an arbitrary protobuf 'message' struct
 type Message struct {
-	Name string
+	Name     string
 	Comments []string
-	Fields []MessageField
+	Fields   []MessageField
 }
 
 // IsRequest returns true if the message is a Request message of an RPC.
@@ -88,23 +88,41 @@ func (m Message) FieldList() string {
 	return strings.Join(list, ", ")
 }
 
+// FieldNames returns all field names without types
+func (m Message) FieldNames() string {
+	var list []string
+	for _, field := range m.Fields {
+		list = append(list, field.Name)
+	}
+	return strings.Join(list, ", ")
+}
+
+// FieldStructInit returns a struct init style string: Name: name
+func (m Message) FieldStructInit() string {
+	var list []string
+	for _, field := range m.Fields {
+		list = append(list, fmt.Sprintf("%s: %s", strcase.ToCamel(field.Name), field.Name))
+	}
+	return strings.Join(list, ", ")
+}
+
 // MessageField defines the field of a protobuf message
 type MessageField struct {
-	Name string
-	Type string
-	Order int
+	Name     string
+	Type     string
+	Order    int
 	Repeated bool
 }
 
 // Enum holds the enum definition from a protobuf file
 type Enum struct {
-	Name string
+	Name     string
 	Comments []string
-	Fields []EnumField
+	Fields   []EnumField
 }
 
 // EnumField defines a single enum field from a protobuf file.
 type EnumField struct {
-	Name string
+	Name  string
 	Order int
 }

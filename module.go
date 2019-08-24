@@ -3,7 +3,8 @@ package godin
 type Type int
 
 const (
-	TransportGrpcServer Type = iota
+	Endpoints Type = iota
+	TransportGrpcServer
 	TransportGrpcClient
 )
 
@@ -33,5 +34,5 @@ type Module interface {
 	Install() error
 
 	// Generate is executed when 'godin generate' is called
-	Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error
+	Generate(projectContext interface{}, protobufContext interface{}, templateRootPath, outputRootPath string) error
 }

@@ -1,0 +1,108 @@
+package test
+
+import "context"
+
+{{- $project := .Project }}
+{{- $protobuf := .Protobuf }}
+{{- $server := .Module }}
+{{- $tpl := .Template }}
+
+{{ range $protobuf.Services }}
+type {{ .Name}} interface {
+    {{- range .RPCs }}
+        {{- $req := ($protobuf.GetMessage .RequestType) }}
+        {{- $res := ($protobuf.GetMessage .ResponseType) }}
+
+        {{- range .Comments}}
+        // {{ . }}
+        {{- end }}
+        {{- if eq (len $res.FieldList) 0 }}
+        {{ .Name }}(ctx context.Context, request {{ $req.Name }}) (err error)
+        {{- else }}
+        {{ .Name }}(ctx context.Context, request {{ $req.Name }}) (response {{ $res.Name }}, err error)
+        {{- end }}
+    {{- end }}
+}
+{{- end }}
+
+{{- range $protobuf.Messages }}
+{{/*
+    SHARED MODELS
+*/}}
+{{- if eq .IsModel true }}
+// {{ .Name }} shared model
+type {{ .Name }} struct {
+    {{ range .Fields }}
+        {{- if eq .Repeated true}}
+            {{ title .Name }} []{{ .Type }}
+        {{- else }}
+            {{ title .Name }} {{ .Type }}
+        {{- end }}
+    {{- end }}
+}
+{{- end }}
+{{- end }}
+
+{{/*
+    SHARED MODELS (ENUMS)
+*/}}
+{{- range $protobuf.Enums }}
+{{- $name := title .Name}}
+// {{ title $name }} enumeration
+type {{ $name }} int32
+const (
+	{{- range .Fields }}
+	{{ $name }}_{{ title .Name }} = {{ .Order }}
+    {{- end }}
+)
+
+{{/* INT => STRING */}}
+var {{ $name }}_name = map[int32]string{
+	{{- range .Fields }}
+	{{ .Order }}: "{{ .Name }}",
+	{{- end }}
+}
+
+{{/* STRING => INT */}}
+var {{ $name }}_value = map[string]int32{
+    {{- range .Fields }}
+    "{{ .Name }}": {{ .Order }},
+    {{- end }}
+}
+{{- end }}
+
+
+{{/*
+    REQUESTS
+*/}}
+{{- range $protobuf.Messages }}
+{{- if eq .IsRequest true }}
+type {{ .Name }} struct {
+    {{ range .Fields }}
+        {{- if eq .Repeated true}}
+            {{ title .Name }} []{{ .Type }}
+        {{- else }}
+            {{ title .Name }} {{ .Type }}
+        {{- end }}
+    {{- end }}
+}
+{{ end }}
+{{- end }}
+
+{{/*
+    RESPONSES
+*/}}
+{{- range $protobuf.Messages }}
+{{- if eq .IsResponse true }}
+type {{ .Name }} struct {
+    {{ range .Fields }}
+        {{- if eq .Repeated true}}
+            {{ title .Name }} []{{ .Type }}
+        {{- else }}
+            {{ title .Name }} {{ .Type }}
+        {{- end }}
+    {{- end }}
+}
+{{ end }}
+{{- end }}
+

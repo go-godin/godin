@@ -5,7 +5,7 @@ var (
 		Config: &TemplateConfiguration{
 			Name:       "grpc-server",
 			SourceFile: "transport/grpc/server.go.tmpl",
-			TargetFile: "transport/grpc/server.go",
+			TargetFile: "internal/transport/grpc/server.go",
 			GoSource:   true,
 			Skip:       false,
 		},
@@ -14,7 +14,7 @@ var (
 		Config: &TemplateConfiguration{
 			Name:       "grpc-client",
 			SourceFile: "transport/grpc/client.go.tmpl",
-			TargetFile: "transport/grpc/client.go",
+			TargetFile: "internal/transport/grpc/client.go",
 			GoSource:   true,
 			Skip:       false,
 		},
@@ -67,8 +67,8 @@ func (mod *GrpcServerModule) Configure(source ResolvableConfig) error {
 }
 
 // Generate will render the modules templates
-func (mod *GrpcServerModule) Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error {
-	if err := mod.ServerTemplate.Render(protobufContext, mod.grpcServerConfig, templateRootPath, outputRootPath); err != nil {
+func (mod *GrpcServerModule) Generate(projectContext, protobufContext interface{}, templateRootPath, outputRootPath string) error {
+	if err := mod.ServerTemplate.Render(projectContext, protobufContext, mod.grpcServerConfig, templateRootPath, outputRootPath); err != nil {
 		return err
 	}
 	return nil
@@ -138,8 +138,8 @@ func (mod *GrpcClientModule) Configure(source ResolvableConfig) error {
 }
 
 // Generate will render the modules templates
-func (mod *GrpcClientModule) Generate(protobufContext interface{}, templateRootPath, outputRootPath string) error {
-	if err := mod.ClientTemplate.Render(protobufContext, mod.grpcClientConfig, templateRootPath, outputRootPath); err != nil {
+func (mod *GrpcClientModule) Generate(projectContext, protobufContext interface{}, templateRootPath, outputRootPath string) error {
+	if err := mod.ClientTemplate.Render(projectContext, protobufContext, mod.grpcClientConfig, templateRootPath, outputRootPath); err != nil {
 		return err
 	}
 	return nil

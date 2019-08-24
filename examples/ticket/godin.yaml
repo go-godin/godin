@@ -1,14 +1,18 @@
 project:
+  module: github.com/go-godin/godin/examples/ticket
+  protobuf:
+    module: github.com/go-godin/ticket-service/api
   service:
     namespace: godin
     name: ticket
   templates:
     sourceFolder: templates
     outputFolder: .
+service:
+  endpoints:
+    zipkinMiddleware: false
 transport:
   grpc:
-    client:
-      retryCount: 3
     server:
       defaultPort: 50051
       defaultAddress: 0.0.0.0

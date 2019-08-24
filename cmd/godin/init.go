@@ -13,12 +13,8 @@ func Init(c *cli.Context) error {
 
 	namespace := c.String("namespace")
 	service := c.String("service")
-	if namespace == "" {
-		log.Fatal("namespace cannot be empty")
-	}
-	if service == "" {
-		log.Fatal("service cannot be empty")
-	}
+	module := c.String("module")
+	protoModule := c.String("protobuf-module")
 
 	wd, _ := os.Getwd()
 
@@ -43,6 +39,8 @@ func Init(c *cli.Context) error {
 
 	output, _ := filepath.Rel(wd, g.OutputPath())
 	source, _ := filepath.Rel(wd, g.TemplateRoot())
+	g.ProjectConfiguration.Module = module
+	g.ProjectConfiguration.Protobuf.Module = protoModule
 	g.ProjectConfiguration.Service.Name = service
 	g.ProjectConfiguration.Service.Namespace = namespace
 	g.ProjectConfiguration.Templates.OutputFolder = output

@@ -63,7 +63,7 @@ func Generate(c *cli.Context) error {
 	for _, module := range app.EnabledModules() {
 		logger := log.WithField("module", module.Identifier())
 		logger.Info("executing module")
-		if err := module.Generate(ctx, app.TemplateRoot(), app.OutputPath()); err != nil {
+		if err := module.Generate(app.ProjectConfiguration, ctx, app.TemplateRoot(), app.OutputPath()); err != nil {
 			logger.WithError(err).Error("module generation failed")
 			continue
 		}
