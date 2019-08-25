@@ -58,7 +58,11 @@ func Add(c *cli.Context) error {
 	}
 
 	if err := app.InstallModule(newModule); err != nil {
-		log.WithError(err).Fatal("unable to install module")
+		if force {
+			log.WithError(err).Warning("error while installing module, may not work as expected")
+		} else {
+			log.WithError(err).Fatal("unable to install module")
+		}
 	}
 
 	// write module templates into project templates folder

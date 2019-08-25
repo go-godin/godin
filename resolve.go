@@ -18,6 +18,7 @@ func NewModuleResolver(configuration *ProjectConfiguration) *moduleResolver {
 }
 
 var moduleNameTypes = map[string]Type{
+	"service.interface":     ServiceInterface,
 	"service.endpoints":     Endpoints,
 	"transport.grpc.server": TransportGrpcServer,
 	"transport.grpc.client": TransportGrpcClient,
@@ -44,6 +45,8 @@ func (res *moduleResolver) Resolve(moduleName string) (Module, error) {
 
 func (res *moduleResolver) Factory(moduleType Type) Module {
 	switch moduleType {
+	case ServiceInterface:
+		return NewServiceInterfaceModule()
 	case Endpoints:
 		return NewEndpointsModule()
 	case TransportGrpcServer:

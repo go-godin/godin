@@ -11,6 +11,8 @@ project:
 service:
   endpoints:
     zipkinMiddleware: false
+  interface:
+    enabled: true
 transport:
   grpc:
     server:
