@@ -30,10 +30,50 @@ func NewEndpointSet(svc Service) Set {
 	}
 }
 
-func (s Set) Create(ctx context.Context, title string, description string) (ticket Ticket, err error) {
-	resp, err := s.CreateEndpoint(ctx, CreateRequest{Title: title, Description: description})
+// MakeCreateEndpoint constructs the Endpoint for the Create RPC
+func MakeCreateEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(CreateRequest)
+		ticket, err := svc.Create(ctx, req.Title, req.Description)
+		resp := CreateResponse{
+			Ticket: ticket,
+			Err:    err,
+		}
+		return resp, nil
+	}
 }
 
-func (s Set) Get(ctx context.Context, id string) (ticket Ticket, err error) {
+// MakeGetEndpoint constructs the Endpoint for the Get RPC
+func MakeGetEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(GetRequest)
+		ticket, err := svc.Get(ctx, req.Id)
+		resp := GetResponse{
+			Ticket: ticket,
+			Err:    err,
+		}
+		return resp, nil
+	}
+}
+
+// Create implements the Service interface in order for convenient access to the endpoints.
+// This is useful in clients.
+func (s Set) Create(ctx context.Context, title string, description string) (ticket *Ticket, err error) {
+	resp, err := s.CreateEndpoint(ctx, CreateRequest{Title: title, Description: description})
+	if err != nil {
+		return nil, err
+	}
+	response := resp.(CreateResponse)
+	return response.Ticket, response.Err
+}
+
+// Get implements the Service interface in order for convenient access to the endpoints.
+// This is useful in clients.
+func (s Set) Get(ctx context.Context, id string) (ticket *Ticket, err error) {
 	resp, err := s.GetEndpoint(ctx, GetRequest{Id: id})
+	if err != nil {
+		return nil, err
+	}
+	response := resp.(GetResponse)
+	return response.Ticket, response.Err
 }

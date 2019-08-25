@@ -34,14 +34,39 @@ func NewEndpointSet(svc Service) Set {
         {{- end }}
     }
 }
+{{ range .RPCs }}
+{{- $req := ($protobuf.GetMessage .RequestType) }}
+{{- $res := ($protobuf.GetMessage .ResponseType) }}
+
+// Make{{.Name}}Endpoint constructs the Endpoint for the {{.Name}} RPC
+func Make{{.Name}}Endpoint(svc Service) endpoint.Endpoint {
+    return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+        req := request.({{$req.Name}})
+        {{$res.FieldNames}}, err := svc.{{.Name}}(ctx, {{$req.FieldNamesPrefixed "req."}})
+        resp := {{$res.Name}}{
+            {{$res.FieldStructInit}},
+        Err: err,
+        }
+        return resp, nil
+    }
+}
+{{- end }}
 
 {{ range .RPCs }}
 {{- $req := ($protobuf.GetMessage .RequestType) }}
 {{- $res := ($protobuf.GetMessage .ResponseType) }}
 
+// {{.Name}} implements the Service interface in order for convenient access to the endpoints.
+// This is useful in clients.
 func (s Set) {{.Name}}(ctx context.Context, {{ $req.FieldList }}) ({{ $res.FieldList}}, err error) {
     resp, err := s.{{.Name}}Endpoint(ctx, {{$req.Name}}{ {{ $req.FieldStructInit }} })
+    if err != nil {
+        return nil, err
+    }
+    response := resp.({{$res.Name}})
+    return {{ $res.FieldNamesPrefixed "response." }}, response.Err
 }
 {{- end }}
+
 
 {{- end }}

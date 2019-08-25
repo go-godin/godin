@@ -3,6 +3,7 @@ package godin
 import (
 	"fmt"
 	"github.com/iancoleman/strcase"
+	"github.com/vetcher/go-astra/types"
 	"strings"
 )
 
@@ -79,11 +80,7 @@ func (m Message) IsModel() bool {
 func (m Message) FieldList() string {
 	var list []string
 	for _, field := range m.Fields {
-		if field.Repeated {
-			list = append(list, fmt.Sprintf("%s []%s", field.Name, field.Type))
-			continue
-		}
-		list = append(list, fmt.Sprintf("%s %s", field.Name, field.Type))
+		list = append(list, fmt.Sprintf("%s %s", field.Name, field.ResolveType()))
 	}
 	return strings.Join(list, ", ")
 }
@@ -97,6 +94,15 @@ func (m Message) FieldNames() string {
 	return strings.Join(list, ", ")
 }
 
+// FieldNamesPrefixed returns all field names without types but with a prefix added.
+func (m Message) FieldNamesPrefixed(prefix string) string {
+	var list []string
+	for _, field := range m.Fields {
+		list = append(list, prefix+strcase.ToCamel(field.Name))
+	}
+	return strings.Join(list, ", ")
+}
+
 // FieldStructInit returns a struct init style string: Name: name
 func (m Message) FieldStructInit() string {
 	var list []string
@@ -106,12 +112,33 @@ func (m Message) FieldStructInit() string {
 	return strings.Join(list, ", ")
 }
 
+// FieldStructDeclare returns all fields of the message and their types, ready to use for a struct declaration
+func (m Message) FieldStructDeclare() string {
+	var list []string
+	for _, field := range m.Fields {
+		list = append(list, fmt.Sprintf("%s %s", strcase.ToCamel(field.Name), field.ResolveType()))
+	}
+	return strings.Join(list, "\n ")
+}
+
 // MessageField defines the field of a protobuf message
 type MessageField struct {
 	Name     string
 	Type     string
 	Order    int
 	Repeated bool
+}
+
+func (f *MessageField) ResolveType() string {
+	var prefix = ""
+	if f.Repeated {
+		prefix += "[]"
+	}
+	if !types.IsBuiltinTypeString(f.Type) {
+		prefix += "*"
+	}
+
+	return prefix + f.Type
 }
 
 // Enum holds the enum definition from a protobuf file

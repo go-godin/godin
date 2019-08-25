@@ -57,11 +57,17 @@ func (e EndpointsModule) Configure(source ResolvableConfig) error {
 }
 
 func (e EndpointsModule) Templates() []Template {
-	return []Template{endpointsTemplate}
+	return []Template{
+		endpointsTemplate,
+		requestResponseTemplate,
+	}
 }
 
 func (e EndpointsModule) OutputPaths() []string {
-	return []string{e.EndpointsTemplate.Configuration().TargetFile}
+	return []string{
+		e.EndpointsTemplate.Configuration().TargetFile,
+		e.RequestResponseTemplate.Configuration().TargetFile,
+	}
 }
 
 func (e EndpointsModule) Install() error {
