@@ -1,0 +1,46 @@
+{{- $project := .Project }}
+{{- $protobuf := .Protobuf }}
+{{- $server := .Module }}
+{{- $tpl := .Template }}
+
+package {{ $project.Service.Name }}
+
+/*
+The models are based off the specified messages in protobuf. You can use them
+as a base for the domain's hidden models as they will most likely correlate with the
+shared models.
+Godin will not render this file when calling 'godin generate', only if it doesn't exist.
+ */
+
+{{ range $protobuf.Messages }}
+{{ if eq .IsModel true }}
+type {{.Name}} struct {
+	{{ .FieldStructDeclare $protobuf }}
+}
+{{- end }}
+{{- end }}
+
+{{- range $protobuf.Enums }}
+{{- $name := title .Name}}
+// {{ title $name }} enumeration
+type {{ $name }} int32
+const (
+{{- range .Fields }}
+	{{ $name }}_{{ title .Name }} = {{ .Order }}
+{{- end }}
+)
+
+{{/* INT => STRING */}}
+var {{ $name }}Name = map[int32]string{
+	{{- range .Fields }}
+	{{ .Order }}: "{{ .Name }}",
+	{{- end }}
+}
+
+{{/* STRING => INT */}}
+var {{ $name }}Value = map[string]int32{
+	{{- range .Fields }}
+	"{{ .Name }}": {{ .Order }},
+	{{- end }}
+}
+{{- end }}

@@ -58,7 +58,7 @@ func Make{{.Name}}Endpoint(svc Service) endpoint.Endpoint {
 
 // {{.Name}} implements the Service interface in order for convenient access to the endpoints.
 // This is useful in clients.
-func (s Set) {{.Name}}(ctx context.Context, {{ $req.FieldList }}) ({{ $res.FieldList}}, err error) {
+func (s Set) {{.Name}}(ctx context.Context, {{ $req.FieldList $protobuf }}) ({{ $res.FieldList $protobuf }}, err error) {
     resp, err := s.{{.Name}}Endpoint(ctx, {{$req.Name}}{ {{ $req.FieldStructInit }} })
     if err != nil {
         return nil, err

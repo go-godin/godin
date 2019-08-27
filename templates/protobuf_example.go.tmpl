@@ -16,7 +16,7 @@ type {{ .Name}} interface {
         {{- range .Comments}}
         // {{ . }}
         {{- end }}
-        {{- if eq (len $res.FieldList) 0 }}
+        {{- if eq (len $res.FieldList $protobuf) 0 }}
         {{ .Name }}(ctx context.Context, request {{ $req.Name }}) (err error)
         {{- else }}
         {{ .Name }}(ctx context.Context, request {{ $req.Name }}) (response {{ $res.Name }}, err error)

@@ -28,6 +28,15 @@ func (ctx Context) GetMessage(name string) Message {
 	return Message{Name: "UNDEFINED", Comments: []string{"Godin was unable to resolve this type"}}
 }
 
+func (ctx Context) IsEnum(name string) bool {
+	for _, enum := range ctx.Enums {
+		if strings.ToLower(enum.Name) == strings.ToLower(name) {
+			return true
+		}
+	}
+	return false
+}
+
 // Service describes a gRPC service as defined in a protobuf file
 type Service struct {
 	Name     string
@@ -77,10 +86,14 @@ func (m Message) IsModel() bool {
 }
 
 // FieldList returns the message fields as a list string which can be used as param, e.g. 'name string, foo int, bar bool'
-func (m Message) FieldList() string {
+func (m Message) FieldList(ctx Context) string {
 	var list []string
 	for _, field := range m.Fields {
-		list = append(list, fmt.Sprintf("%s %s", field.Name, field.ResolveType()))
+		if ctx.IsEnum(field.Type) {
+			list = append(list, fmt.Sprintf("%s %s", field.Name, field.Type))
+		} else {
+			list = append(list, fmt.Sprintf("%s %s", field.Name, field.ResolveType()))
+		}
 	}
 	return strings.Join(list, ", ")
 }
@@ -113,10 +126,14 @@ func (m Message) FieldStructInit() string {
 }
 
 // FieldStructDeclare returns all fields of the message and their types, ready to use for a struct declaration
-func (m Message) FieldStructDeclare() string {
+func (m Message) FieldStructDeclare(ctx Context) string {
 	var list []string
 	for _, field := range m.Fields {
-		list = append(list, fmt.Sprintf("%s %s", strcase.ToCamel(field.Name), field.ResolveType()))
+		if ctx.IsEnum(field.Type) {
+			list = append(list, fmt.Sprintf("%s %s", strcase.ToCamel(field.Name), field.Type))
+		} else {
+			list = append(list, fmt.Sprintf("%s %s", strcase.ToCamel(field.Name), field.ResolveType()))
+		}
 	}
 	return strings.Join(list, "\n ")
 }

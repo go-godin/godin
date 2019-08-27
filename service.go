@@ -1,11 +1,24 @@
 package godin
 
+import (
+	"strings"
+)
+
 var (
 	serviceInterfaceTemplate = &BaseTemplate{
 		Config: &TemplateConfiguration{
 			Name:       "service-interface",
 			SourceFile: "service/interface.go.tmpl",
-			TargetFile: "internal/service/service.go",
+			TargetFile: "internal/<ServiceName>/service.go",
+			GoSource:   true,
+			Skip:       false,
+		},
+	}
+	modelsTemplate = &BaseTemplate{
+		Config: &TemplateConfiguration{
+			Name:       "service-models",
+			SourceFile: "service/models.go.tmpl",
+			TargetFile: "internal/<ServiceName>/models.go",
 			GoSource:   true,
 			Skip:       false,
 		},
@@ -14,6 +27,7 @@ var (
 
 type ServiceInterfaceModule struct {
 	ServiceInterfaceTemplate Template
+	ServiceModelsTemplate    Template
 	*serviceInterfaceConfig
 }
 
@@ -21,10 +35,17 @@ type serviceInterfaceConfig struct {
 	Enabled bool
 }
 
-func NewServiceInterfaceModule() Module {
+func NewServiceInterfaceModule(serviceName string) Module {
+	tf := serviceInterfaceTemplate.Config.TargetFile
+	serviceInterfaceTemplate.Config.TargetFile = strings.Replace(tf, "<ServiceName>", serviceName, 1)
+
+	tf = modelsTemplate.Config.TargetFile
+	modelsTemplate.Config.TargetFile = strings.Replace(tf, "<ServiceName>", serviceName, 1)
+
 	return &ServiceInterfaceModule{
 		ServiceInterfaceTemplate: serviceInterfaceTemplate,
-		serviceInterfaceConfig: &serviceInterfaceConfig{true},
+		ServiceModelsTemplate:    modelsTemplate,
+		serviceInterfaceConfig:   &serviceInterfaceConfig{true},
 	}
 }
 
@@ -48,12 +69,14 @@ func (e ServiceInterfaceModule) Configure(source ResolvableConfig) error {
 func (e ServiceInterfaceModule) Templates() []Template {
 	return []Template{
 		serviceInterfaceTemplate,
+		modelsTemplate,
 	}
 }
 
 func (e ServiceInterfaceModule) OutputPaths() []string {
 	return []string{
 		e.ServiceInterfaceTemplate.Configuration().TargetFile,
+		e.ServiceModelsTemplate.Configuration().TargetFile,
 	}
 }
 
@@ -63,6 +86,13 @@ func (e ServiceInterfaceModule) Install() error {
 
 func (e ServiceInterfaceModule) Generate(projectContext interface{}, protobufContext interface{}, templateRootPath, outputRootPath string) error {
 	if err := e.ServiceInterfaceTemplate.Render(projectContext, protobufContext, e.serviceInterfaceConfig, templateRootPath, outputRootPath); err != nil {
+		return err
+	}
+
+	if e.ServiceModelsTemplate.Configuration().TargetExists(outputRootPath) {
+		e.ServiceModelsTemplate.Configuration().Skip = true
+	}
+	if err := e.ServiceModelsTemplate.Render(projectContext, protobufContext, e.serviceInterfaceConfig, templateRootPath, outputRootPath); err != nil {
 		return err
 	}
 	return nil

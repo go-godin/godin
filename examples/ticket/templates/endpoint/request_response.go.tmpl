@@ -18,13 +18,13 @@ import (
 
 // {{.Name}}Request wraps the request fields of the {{.Name}} Endpoint.
 type {{.Name}}Request struct {
-	{{ $req.FieldStructDeclare }}
+	{{ $req.FieldStructDeclare $protobuf }}
 }
 
 // {{.Name}}Response wraps the response fields of the {{.Name}} Endpoint, adding an error field
 // implementing the Failer interface.
 type {{.Name}}Response struct {
-	{{ $res.FieldStructDeclare }}
+	{{ $res.FieldStructDeclare $protobuf }}
 	Err error
 }
 {{- end }}

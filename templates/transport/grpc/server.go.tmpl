@@ -76,7 +76,7 @@ func Encode{{.Name}}Response(ctx context.Context, response interface{}) (interfa
 	if response == nil {
 		return nil, errors.New("nil {{.Name}}Response")
 	}
-	res := response.(endpoint.{{$req.Name}})
+	res := response.(endpoint.{{$res.Name}})
 	pbResponse, err := {{.Name}}ResponseEncoder(res)
 	if err != nil {
 		return nil, err

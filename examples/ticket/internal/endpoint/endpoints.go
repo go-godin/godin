@@ -5,7 +5,7 @@ import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
 
-	. "github.com/go-godin/godin/examples/ticket/internal/service"
+	. "github.com/go-godin/godin/examples/ticket/internal/ticket"
 )
 
 type Set struct {

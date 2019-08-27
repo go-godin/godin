@@ -46,7 +46,7 @@ func (res *moduleResolver) Resolve(moduleName string) (Module, error) {
 func (res *moduleResolver) Factory(moduleType Type) Module {
 	switch moduleType {
 	case ServiceInterface:
-		return NewServiceInterfaceModule()
+		return NewServiceInterfaceModule(res.project.Service.Name)
 	case Endpoints:
 		return NewEndpointsModule()
 	case TransportGrpcServer:

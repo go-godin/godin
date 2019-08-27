@@ -74,7 +74,7 @@ func EncodeCreateResponse(ctx context.Context, response interface{}) (interface{
 	if response == nil {
 		return nil, errors.New("nil CreateResponse")
 	}
-	res := response.(endpoint.CreateRequest)
+	res := response.(endpoint.CreateResponse)
 	pbResponse, err := CreateResponseEncoder(res)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func EncodeGetResponse(ctx context.Context, response interface{}) (interface{}, 
 	if response == nil {
 		return nil, errors.New("nil GetResponse")
 	}
-	res := response.(endpoint.GetRequest)
+	res := response.(endpoint.GetResponse)
 	pbResponse, err := GetResponseEncoder(res)
 	if err != nil {
 		return nil, err

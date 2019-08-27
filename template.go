@@ -38,6 +38,14 @@ func (cfg *TemplateConfiguration) SourceExists(templateDir string) bool {
 	return true
 }
 
+// TargetExists checks - given the path to the output folder - if the template target file exists
+func (cfg *TemplateConfiguration) TargetExists(outputRoot string) bool {
+	if _, err := os.Stat(filepath.Join(outputRoot, cfg.TargetFile)); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 // EnsureTargetPath ensures that the template's target path exists and is writeable by the current user.
 // It will create missing folders.
 func (cfg *TemplateConfiguration) EnsureTargetPath(outputDir string) error {
@@ -83,7 +91,7 @@ func (tpl *BaseTemplate) Render(projectContext, protobufContext interface{}, mod
 	})
 
 	if tpl.Config.Skip {
-		logger.Debug("template disabled")
+		logger.Info("template disabled")
 		return nil
 	}
 	logger.Debug("template enabled")
