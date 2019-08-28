@@ -119,6 +119,40 @@ and maybe introduce some modification into godin.
 
 
 # Modules
+Modules are logically separated pieces which provide templates and additional functionality.
+A module is defined by a single interface: 
+```go
+type Module interface {
+	ConfigProvider
+
+	// Configure is used to initialize a module based on some ResolvableConfig which can be
+	// unmarshalled into the module's own configuration struct.
+	Configure(source ResolvableConfig) error
+
+	// Templates returns all template object which the module uses.
+	Templates() []Template
+
+	// OutputPaths returns a list of paths which must exist in order for the module to correctly generate the
+	// templates.
+	OutputPaths() []string
+
+	// Install hook is called when 'godin add' is executed for that module. The hook enables the module to interfere
+	// and prepare the module (e.g. prompt for values).
+	// The installation is considered a success if error == nil.
+	Install() error
+
+	// Generate is executed when 'godin generate' is called
+	Generate(projectContext interface{}, protobufContext interface{}, templateRootPath, outputRootPath string) error
+}
+```
+
+Modules allow for a separation of concerns within godin. They also make it easier to extend godin without having a profound
+understanding of it's inner workings.
+
+> The module system - although working - is not yet done and might change often. 
+
+## Available modules
+
 ### `transport.grpc.server`
 | Source | Target | Note | Overwrite |
 |--------|--------|------|-----------|

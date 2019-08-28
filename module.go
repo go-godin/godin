@@ -18,7 +18,7 @@ type ResolvableConfig interface {
 type Module interface {
 	ConfigProvider
 
-	// Configure is used to initialize a module based on some ResolveableConfig which can be
+	// Configure is used to initialize a module based on some ResolvableConfig which can be
 	// unmarshalled into the module's own configuration struct.
 	Configure(source ResolvableConfig) error
 
